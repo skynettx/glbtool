@@ -1,0 +1,19 @@
+# Glbtool
+A tool for Raptor Call Of The Shadows glb files.
+
+## Build
+When you have installed git on your system you can clone the repository 
+by type in `git clone https://github.com/skynettx/glbtool.git`.
+
+### Windows
+You can use the projectfile for Visual Studio 2022 under `msvc\`.
+
+### Linux and macOS
+To build use cmake, type in the root of the repository:  
+```
+mkdir build
+cd build
+cmake ..
+make
+```
+
