@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <sys/stat.h>
 #include <filesystem>
+#include <set>
 #include "main.h"
 #include "decrypt.h"
 #include "encrypt.h"
@@ -15,7 +15,6 @@
 #endif // _WIN32
 #ifdef __linux__
 #include <sys/io.h>
-#include <search.h>
 #endif // __linux__
 #ifdef __GNUC__
 #include <unistd.h>
@@ -48,6 +47,7 @@ FILE* outfile;
 
 const char* serial = "32768GLB";
 
+using namespace std;
 namespace fs = std::filesystem;
 
 int CheckStrDigit(char* string)
@@ -206,7 +206,6 @@ int main(int argc, char** argv)
     if (strcmp(argv[1], encryptall) == 0)
     {
         encryptallflag = 1;
-        int i = 0;
         
         if (!argv[2])
         {
@@ -216,6 +215,7 @@ int main(int argc, char** argv)
         
         strncpy(infilename, argv[2], 260);
         std::string path = infilename;
+        set<fs::path> sort_filename;
         
         if (access(infilename, 0))
         {
@@ -237,19 +237,15 @@ int main(int argc, char** argv)
         
         if (argv[2] && argv[3])
         {
-            for (const auto& file : std::filesystem::directory_iterator(infilename))
+            for (auto& entry : fs::directory_iterator(infilename))
+                sort_filename.insert(entry.path());
+          
+            for (auto& filename : sort_filename)
             {
-                //size_t length = file.path().stem().string().length() + 1;
-                size_t length = file.path().string().length() + 1;
-                allinfilenames[i] = (char*)malloc(length);
-                
-                allinfilenames[i] = new char[file.path().string().length() + 1];
-                strcpy(allinfilenames[i], file.path().string().c_str());
-                
-                //allinfilenames[i] = new char[file.path().stem().string().length() + 1];
-                //strcpy(allinfilenames[i], file.path().stem().string().c_str());
-                
-                ++i;
+                size_t length = filename.string().length() + 1;
+                allinfilenames[allinfilenamescnt] = (char*)malloc(length);
+                strcpy(allinfilenames[allinfilenamescnt], filename.string().c_str());
+
                 allinfilenamescnt++;
             }
         }
@@ -281,8 +277,8 @@ int main(int argc, char** argv)
                 searchnumber = -1;
         }
     }
-   
-    if (!argv[2])
+    
+    if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag)
     {
        printf("Command not found\n"
               "Usage: -h for help\n");

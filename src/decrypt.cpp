@@ -12,7 +12,6 @@
 #endif // _WIN32
 #ifdef __linux__
 #include <sys/io.h>
-#include <search.h>
 #endif // __linux__
 #ifdef __GNUC__
 #include <unistd.h>
