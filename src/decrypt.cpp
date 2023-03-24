@@ -7,20 +7,18 @@
 #include <stdint.h>
 #include "main.h"
 #include "decrypt.h"
+
 #ifdef _WIN32
 #include <io.h>
 #endif // _WIN32
-#ifdef __linux__
-#include <sys/io.h>
-#endif // __linux__
 #ifdef __GNUC__
 #include <unistd.h>
-#endif
+#endif // __GNUC__
 #ifdef _MSC_VER
 #include <windows.h>
 #define PATH_MAX MAX_PATH
 #define access _access
-#endif
+#endif // _MSC_VER
 
 struct filedesc_t {
     char path[PATH_MAX];

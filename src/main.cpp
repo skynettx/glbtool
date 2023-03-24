@@ -10,20 +10,18 @@
 #include "main.h"
 #include "decrypt.h"
 #include "encrypt.h"
+
 #ifdef _WIN32
 #include <io.h>
 #endif // _WIN32
-#ifdef __linux__
-#include <sys/io.h>
-#endif // __linux__
 #ifdef __GNUC__
 #include <unistd.h>
-#endif
+#endif // __GNUC__
 #ifdef _MSC_VER
 #include <windows.h>
 #define PATH_MAX MAX_PATH
 #define access _access
-#endif
+#endif // _MSC_VER
 
 char filename[260];
 char searchname[260];

@@ -26,15 +26,13 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include "main.h"
+
 #ifdef _WIN32
 #include <io.h>
 #endif // _WIN32
-#ifdef __linux__
-#include <sys/io.h>
-#endif // __linux__
 #ifdef __GNUC__
 #include <unistd.h>
-#endif
+#endif // __GNUC__
 #ifdef _MSC_VER
 #include <windows.h>
 #define PATH_MAX MAX_PATH
@@ -42,7 +40,7 @@
 #define fileno _fileno
 #define write _write
 #define read _read
-#endif
+#endif // _MSC_VER
 
 struct State {
      char current_byte;
