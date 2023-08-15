@@ -30,7 +30,7 @@ struct meminfo_t
 };
 
 struct fitem_t {
-    char name[16];
+    char name[32];
     meminfo_t mem;
     int length;
     int offset;

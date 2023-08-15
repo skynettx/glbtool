@@ -263,7 +263,10 @@ void GLB_Extract(void)
     int i, j;
     int foundflag = 0;
     char* buffer;
-    char dup[16];
+    char dup[32];
+    char noname[32];
+    char label[32];
+    char labelsave[32];
 
     for (i = 0; i < num_glbs; i++)
     {
@@ -272,11 +275,26 @@ void GLB_Extract(void)
 
         for (j = 0; j < fc; j++, fi++)
         {
+            if (fi->length == 0)
+            {
+                strncpy(label, fi->name, 32);
+                strncpy(labelsave, fi->name, 32);
+            }
+
+            if (strcmp(fi->name, "") == 0)
+            {
+                sprintf(noname, "_%03x", j);
+                strcat(label, noname);
+                strcpy(fi->name, label);
+                strcpy(label, labelsave);
+            }
+
             if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
             {
                 foundflag = 1;
+                
                 buffer = GLB_GetItem(j);
-
+                
                 if (!access(fi->name, 0))
                 {
                     sprintf(dup, "_%03x", j);
