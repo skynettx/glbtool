@@ -27,6 +27,7 @@ char filename[260];
 char searchname[260];
 char infilename[260];
 char outfilename[260];
+char getdirectory[260];
 char** allinfilenames;
 int allinfilenamescnt;
 int itemcount = 0;
@@ -289,6 +290,16 @@ int main(int argc, char** argv)
         if (argv[2])
             strncpy(filename, argv[2], 260);
         
+        
+        if (argv[2] && extractflag)
+        {
+            strncpy(getdirectory, filename, 260);
+            RemoveCharFromString(getdirectory, '.');
+
+            if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+                fs::create_directory(getdirectory);
+        }
+
         GLB_InitSystem();
     }
 

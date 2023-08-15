@@ -267,7 +267,9 @@ void GLB_Extract(void)
     char noname[32];
     char label[32];
     char labelsave[32];
-
+    char getpath[260];
+    char outdirectory[260];
+   
     for (i = 0; i < num_glbs; i++)
     {
         fi = filedesc[i].items;
@@ -292,17 +294,21 @@ void GLB_Extract(void)
             if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
             {
                 foundflag = 1;
-                
                 buffer = GLB_GetItem(j);
                 
-                if (!access(fi->name, 0))
+                RemoveCharFromString(fi->name, '/');
+
+                strncpy(outdirectory, getdirectory, 260);
+                sprintf(getpath, "/%s", fi->name);
+                strcat(outdirectory, getpath);
+                
+                if (!access(outdirectory, 0))
                 {
                     sprintf(dup, "_%03x", j);
-                    strcat(fi->name, dup);
+                    strcat(outdirectory, dup);
                 }
 
-                RemoveCharFromString(fi->name, '/');
-                outfile = fopen(fi->name, "wb");
+                outfile = fopen(outdirectory, "wb");
 
                 if (outfile && buffer)
                 {
@@ -322,14 +328,19 @@ void GLB_Extract(void)
             {
                 buffer = GLB_GetItem(j);
 
-                if (!access(fi->name, 0))
+                RemoveCharFromString(fi->name, '/');
+
+                strncpy(outdirectory, getdirectory, 260);
+                sprintf(getpath, "/%s", fi->name);
+                strcat(outdirectory, getpath);
+                
+                if (!access(outdirectory, 0))
                 {
                     sprintf(dup, "_%03x", j);
-                    strcat(fi->name, dup);
+                    strcat(outdirectory, dup);
                 }
 
-                RemoveCharFromString(fi->name, '/');
-                outfile = fopen(fi->name, "wb");
+                outfile = fopen(outdirectory, "wb");
 
                 if (outfile && buffer)
                 {

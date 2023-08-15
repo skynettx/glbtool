@@ -10,6 +10,7 @@ extern char filename[260];
 extern char searchname[260];
 extern char infilename[260];
 extern char outfilename[260];
+extern char getdirectory[260];
 extern char** allinfilenames;
 extern int allinfilenamescnt;
 extern int itemcount;
