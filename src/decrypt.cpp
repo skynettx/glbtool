@@ -263,9 +263,11 @@ void GLB_FreeAll(void)
 void GLB_Extract(void)
 {
     fitem_t* fi;
+    FILE* lf;
     int fc;
     int i, j;
     int foundflag = 0;
+    int labelflag = 0;
     char* buffer;
     char dup[32];
     char noname[32];
@@ -273,7 +275,11 @@ void GLB_Extract(void)
     char labelsave[32];
     char getpath[260];
     char outdirectory[260];
-   
+    char linkfile[260];
+
+    strncpy(linkfile, getdirectory, 260);
+    strcat(linkfile, ".link");
+
     for (i = 0; i < num_glbs; i++)
     {
         fi = filedesc[i].items;
@@ -293,7 +299,10 @@ void GLB_Extract(void)
                 strcat(label, noname);
                 strcpy(fi->name, label);
                 strcpy(label, labelsave);
+                labelflag = 1;
             }
+            else
+                labelflag = 0;
 
             if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
             {
@@ -314,6 +323,21 @@ void GLB_Extract(void)
                     sprintf(dup, "_%03x", j);
                     strcat(outdirectory, dup);
                 }
+
+                lf = fopen(linkfile, "a");
+                fseek(lf, 0, SEEK_END);
+                
+                if (!labelflag)
+                {
+                    fprintf(lf, "%s ", outdirectory);
+                    fprintf(lf, "%s\n", fi->name);
+                }
+                else
+                {
+                    fprintf(lf, "%s\n", outdirectory);
+                }
+                
+                fclose(lf);
 
                 outfile = fopen(outdirectory, "wb");
 
@@ -350,6 +374,21 @@ void GLB_Extract(void)
                     strcat(outdirectory, dup);
                 }
 
+                lf = fopen(linkfile, "a");
+                fseek(lf, 0, SEEK_END);
+                
+                if (!labelflag)
+                {
+                    fprintf(lf, "%s ", outdirectory);
+                    fprintf(lf, "%s\n", fi->name);
+                }
+                else
+                {
+                    fprintf(lf, "%s\n", outdirectory);
+                }
+                
+                fclose(lf);
+
                 outfile = fopen(outdirectory, "wb");
 
                 if (outfile && buffer)
@@ -367,7 +406,7 @@ void GLB_Extract(void)
                 itemtotal++;
         }
     }
-
+   
     if (searchflag && !foundflag)
         printf("Item not found\n");
 }
