@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <filesystem>
 #include "main.h"
 #include "decrypt.h"
 
@@ -42,6 +43,9 @@ struct glbitem_t {
 #pragma pack(pop)
 
 int num_glbs = 1;
+
+using namespace std;
+namespace fs = std::filesystem;
 
 void GLB_DeCrypt(const char* key, void* buf, int size)
 {
@@ -296,6 +300,9 @@ void GLB_Extract(void)
                 foundflag = 1;
                 buffer = GLB_GetItem(j);
                 
+                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+                    fs::create_directory(getdirectory);
+
                 RemoveCharFromString(fi->name, '/');
 
                 strncpy(outdirectory, getdirectory, 260);
@@ -327,6 +334,9 @@ void GLB_Extract(void)
             if (!searchflag)
             {
                 buffer = GLB_GetItem(j);
+
+                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+                    fs::create_directory(getdirectory);
 
                 RemoveCharFromString(fi->name, '/');
 
