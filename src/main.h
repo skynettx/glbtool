@@ -12,6 +12,7 @@ extern char infilename[260];
 extern char outfilename[260];
 extern char getdirectory[260];
 extern char** allinfilenames;
+extern char** alloutfilenames;
 extern int allinfilenamescnt;
 extern int itemcount;
 extern int itemtotal;
@@ -21,6 +22,7 @@ extern int listallflag;
 extern int extractflag;
 extern int encryptflag;
 extern int encryptallflag;
+extern int encryptlinkflag;
 extern int searchflag;
 extern int searchnumber;
 

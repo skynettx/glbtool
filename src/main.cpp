@@ -29,6 +29,7 @@ char infilename[260];
 char outfilename[260];
 char getdirectory[260];
 char** allinfilenames;
+char** alloutfilenames;
 int allinfilenamescnt;
 int itemcount = 0;
 int itemtotal = 0;
@@ -38,6 +39,7 @@ int listallflag = 0;
 int extractflag = 0;
 int encryptflag = 0;
 int encryptallflag = 0;
+int encryptlinkflag = 0;
 int searchflag = 0;
 int searchnumber = -1;
 
@@ -105,9 +107,11 @@ int main(int argc, char** argv)
     const char* extract = "-x";
     const char* encrypt = "-e";
     const char* encryptall = "-ea";
+    const char* encryptlink = "-el";
     const char* list = "-l";
     const char* listall = "-la";
-    
+    char line;
+
     printf("********************************************************************************\n"
            " GLB Tool for Raptor GLB Files                                                  \n"
            "********************************************************************************\n");
@@ -125,6 +129,7 @@ int main(int argc, char** argv)
                "    optional <SearchItemNameNumber> only extract found items\n"
                "-e  Encrypt items from <INPUTFILE>... to <OUTPUTFILE.GLB>\n"
                "-ea Encrypt all items from <INPUTFOLDER> to <OUTPUTFILE.GLB>\n"
+               "-el Encrypt all items from <LINKFILE> to <OUTPUTFILE.GLB>\n"
                "-l  List items from <INPUTFILE.GLB>\n" 
                "    optional <FILENUMBER> for correct item numbers in files > FILE0000.GLB\n"
                "    optional <SearchItemNameNumber> only list found items\n"
@@ -250,6 +255,72 @@ int main(int argc, char** argv)
         }
     }
     
+    if (strcmp(argv[1], encryptlink) == 0)
+    {
+        encryptlinkflag = 1;
+        
+        if (!argv[2])
+        {
+            printf("No link file specified\n");
+            return 0;
+        }
+
+        strncpy(infilename, argv[2], 260);
+
+        if (access(infilename, 0))
+        {
+            printf("Link file not found\n");
+            return 0;
+        }
+        
+        if (!argv[3])
+        {
+            printf("No output file specified\n");
+            return 0;
+        }
+
+        if (argv[3])
+            strncpy(outfilename, argv[3], 260);
+        
+        FILE* linkfile = fopen(infilename, "r");
+        allinfilenamescnt = 0;
+
+        if (linkfile == NULL) 
+        {
+            printf("Cannot open link file\n");
+            return 1;
+        }
+        else
+        {
+            do
+            {
+                line = fgetc(linkfile);
+                
+                if (line == '\n') 
+                    allinfilenamescnt++;
+
+            } while (line != EOF);
+            
+            rewind(linkfile);
+
+            allinfilenames = (char**)malloc((4096) * sizeof * allinfilenames);
+            alloutfilenames = (char**)malloc((4096) * sizeof * alloutfilenames);
+
+            for (int i = 0; i < allinfilenamescnt; i++)
+            {
+                allinfilenames[i] = (char*)malloc(allinfilenamescnt);
+                alloutfilenames[i] = (char*)malloc(allinfilenamescnt);
+                
+                fscanf(linkfile, "%s %s\n", allinfilenames[i], alloutfilenames[i]);
+                
+                if (strcmp(alloutfilenames[i],"LABEL") == 0)
+                    strcpy(alloutfilenames[i], "");
+            }
+        }
+        
+        fclose(linkfile);
+    }
+
     if (strcmp(argv[1], list) == 0)
         listflag = 1;
 
@@ -277,7 +348,7 @@ int main(int argc, char** argv)
         }
     }
     
-    if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag)
+    if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag)
     {
        printf("Command not found\n"
               "Usage: -h for help\n");
@@ -299,11 +370,14 @@ int main(int argc, char** argv)
         GLB_InitSystem();
     }
 
-    if (encryptflag || encryptallflag)
+    if (encryptflag || encryptallflag || encryptlinkflag)
     {
         GLB_Create(outfilename);
         printf("Total items encrypted: %02d to %s %d Bytes written\n", itemtotal, outfilename, itemtotalsize);
         free(allinfilenames);
+
+        if (encryptlinkflag)
+            free(alloutfilenames);
     }
 
     if (extractflag)

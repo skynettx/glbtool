@@ -334,7 +334,8 @@ void GLB_Extract(void)
                 }
                 else
                 {
-                    fprintf(lf, "%s\n", outdirectory);
+                    fprintf(lf, "%s ", outdirectory);
+                    fprintf(lf, "%s\n", "LABEL");
                 }
                 
                 fclose(lf);
@@ -384,7 +385,8 @@ void GLB_Extract(void)
                 }
                 else
                 {
-                    fprintf(lf, "%s\n", outdirectory);
+                    fprintf(lf, "%s ", outdirectory);
+                    fprintf(lf, "%s\n", "LABEL");
                 }
                 
                 fclose(lf);

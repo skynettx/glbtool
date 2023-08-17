@@ -145,7 +145,7 @@ int fat_io_write(struct fitem_t* fat, int fd)
     return write(fd, buffer, 28);
 }
 
-int fat_entry_init(struct fitem_t* fat, char* path, int offset)
+int fat_entry_init(struct fitem_t* fat, char* path, char* itemname, int offset)
 {
     struct stat st;
 
@@ -165,7 +165,10 @@ int fat_entry_init(struct fitem_t* fat, char* path, int offset)
     if (len > 16)
         path += len - 16 + 1;
 
-    strcpy(fat->name, path);
+    if (encryptlinkflag)
+        strcpy(fat->name, itemname);
+    else
+        strcpy(fat->name, path);
 
     strncpy(fat->name, RemovePathFromString(fat->name), 16);
 
@@ -224,14 +227,26 @@ void GLB_Create(char* outfilename)
 
     for (i = 0; i < nfiles; i++)
     {
-
-        if (fat_entry_init(&ffat[i], allinfilenames[filecnt], offset))
+        if (encryptlinkflag)
         {
-            printf("Could not init fat entry %s\n", allinfilenames[filecnt]);
-            EXIT_Error("Could not init fat entry");
+            if (fat_entry_init(&ffat[i], allinfilenames[filecnt], alloutfilenames[filecnt], offset))
+            {
+                printf("Could not init fat entry %s\n", allinfilenames[filecnt]);
+                EXIT_Error("Could not init fat entry");
+            }
         }
-
-        if (ffat[i].length > largest) largest = ffat[i].length;
+        else
+        {
+            if (fat_entry_init(&ffat[i], allinfilenames[filecnt], 0, offset))
+            {
+                printf("Could not init fat entry %s\n", allinfilenames[filecnt]);
+                EXIT_Error("Could not init fat entry");
+            }
+        }
+        
+        if (ffat[i].length > largest) 
+            largest = ffat[i].length;
+        
         offset += ffat[i].length;
 
         filecnt++;
@@ -250,7 +265,8 @@ void GLB_Create(char* outfilename)
         {
             EXIT_Error("DIE");
         }
-        else if (bytes != 28) {
+        else if (bytes != 28) 
+        {
             printf("Bytes written not equal to file length %s\n", ffat[i].name);
         }
     }
@@ -285,7 +301,8 @@ void GLB_Create(char* outfilename)
         {
             EXIT_Error("DIE");
         }
-        else if (bytes != ffat[i].length) {
+        else if (bytes != ffat[i].length) 
+        {
             printf("Bytes read not equal to file length %s\n", allinfilenames[filecnt]);
         }
 
