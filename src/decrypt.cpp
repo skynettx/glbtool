@@ -278,7 +278,7 @@ void GLB_Extract(void)
     char linkfile[260];
 
     strncpy(linkfile, getdirectory, 260);
-    strcat(linkfile, ".link");
+    strcat(linkfile, "lnk.txt");
 
     for (i = 0; i < num_glbs; i++)
     {
@@ -463,4 +463,57 @@ void GLB_List(void)
 
     if (searchflag && !foundflag)
         printf("Item not found\n");
+}
+
+void GLB_WriteHeaderFile(void)
+{
+    fitem_t* fi;
+    int fc;
+    int filecount = 0;
+    FILE* hf;
+
+    if (access("fileids.h", 0))
+    {
+        hf = fopen("fileids.h", "a");
+        fseek(hf, 0, SEEK_END);
+        
+        fprintf(hf, "#pragma once\n");
+
+        fclose(hf);
+    }
+
+    hf = fopen("fileids.h", "a");
+    fseek(hf, 0, SEEK_END);
+
+    fprintf(hf, "\n");
+    fprintf(hf, "//%s Items\n",filename);
+    fprintf(hf, "\n");
+
+    fclose(hf);
+
+    for (int i = 0; i < num_glbs; i++)
+    {
+        fi = filedesc[i].items;
+        fc = filedesc[i].itemcount + itemcount;
+
+        for (int j = itemcount; j < fc; j++, fi++)
+        {
+            RemoveCharFromString(fi->name, '/');
+            
+            if (fi->name[0] != '\0')
+            {
+                hf = fopen("fileids.h", "a");
+                fseek(hf, 0, SEEK_END);
+
+                fprintf(hf, "#define FILE%01d%02x_%s 0x%05x\n", itemcountsave, filecount, fi->name, j);
+
+                fclose(hf);
+            }
+            
+            filecount++;
+
+            if (filecount > 0xff)
+                filecount = 0x0;
+        }
+    }
 }

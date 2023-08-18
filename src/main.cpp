@@ -32,10 +32,12 @@ char** allinfilenames;
 char** alloutfilenames;
 int allinfilenamescnt;
 int itemcount = 0;
+int itemcountsave;
 int itemtotal = 0;
 int itemtotalsize = 0;
 int listflag = 0;
 int listallflag = 0;
+int writeheaderflag = 0;
 int extractflag = 0;
 int encryptflag = 0;
 int encryptallflag = 0;
@@ -110,10 +112,11 @@ int main(int argc, char** argv)
     const char* encryptlink = "-el";
     const char* list = "-l";
     const char* listall = "-la";
+    const char* writeheader = "-w";
     char line;
 
     printf("********************************************************************************\n"
-           " GLB Tool for Raptor GLB Files                                                  \n"
+           " GLB Tool for Raptor Call Of The Shadows GLB Files                              \n"
            "********************************************************************************\n");
 
     if (!argv[1])
@@ -129,13 +132,15 @@ int main(int argc, char** argv)
                "    optional <SearchItemNameNumber> only extract found items\n"
                "-e  Encrypt items from <INPUTFILE>... to <OUTPUTFILE.GLB>\n"
                "-ea Encrypt all items from <INPUTFOLDER> to <OUTPUTFILE.GLB>\n"
-               "-el Encrypt all items from <LINKFILE> to <OUTPUTFILE.GLB>\n"
+               "-el Encrypt all items from <LINKFILE.txt> to <OUTPUTFILE.GLB>\n"
                "-l  List items from <INPUTFILE.GLB>\n" 
                "    optional <FILENUMBER> for correct item numbers in files > FILE0000.GLB\n"
                "    optional <SearchItemNameNumber> only list found items\n"
-               "-la List complete content (with markers) from <INPUTFILE.GLB>\n"
+               "-la List complete content (with labels) from <INPUTFILE.GLB>\n"
                "    optional <FILENUMBER> for correct item numbers in files > FILE0000.GLB\n"
                "    optional <SearchItemNameNumber> only list found items\n"
+               "-w  Write header file from <INPUTFILE.GLB> and add <FILENUMBER>\n"
+               "    for correct item numbers\n"
                "-h  Show this help\n");
         
         return 0;
@@ -348,7 +353,44 @@ int main(int argc, char** argv)
         }
     }
     
-    if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag)
+    if (strcmp(argv[1], writeheader) == 0)
+    {
+        writeheaderflag = 1;
+
+        if (!argv[2])
+        {
+            printf("No input file specified\n");
+            return 0;
+        }
+        
+        if (argv[2])
+        {
+            strncpy(filename, argv[2], 260);
+        }
+        
+        if (access(filename, 0))
+        {
+            printf("Input file not found\n");
+            return 0;
+        }
+        
+        if (argc == 4 || argc > 4)
+        {
+            itemcount = atoi(argv[3]);
+
+            itemcountsave = itemcount;
+
+            if (itemcount)
+                itemcount *= 0x10000;
+        }
+        else
+        {
+            printf("No file number specified\n");
+            return 0;
+        }
+    }
+
+    if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag)
     {
        printf("Command not found\n"
               "Usage: -h for help\n");
@@ -356,7 +398,7 @@ int main(int argc, char** argv)
        return 0;
     }
     
-    if (extractflag || listflag || listallflag)
+    if (extractflag || listflag || listallflag || writeheaderflag)
     {
         if (argv[2])
             strncpy(filename, argv[2], 260);
@@ -393,7 +435,14 @@ int main(int argc, char** argv)
         GLB_FreeAll();
     }
     
-    if (extractflag || listflag || listallflag)
+    if (writeheaderflag)
+    {
+        GLB_WriteHeaderFile();
+        printf("Header fileids.h written\n");
+        GLB_FreeAll();
+    }
+
+    if (extractflag || listflag || listallflag || writeheaderflag)
         fclose(infile);
     
     return 0;
