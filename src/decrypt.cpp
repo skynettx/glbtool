@@ -73,7 +73,7 @@ FILE* GLB_OpenFile(int refail, int filenum, const char* mode)
     FILE* h;
     char buffer[PATH_MAX];
 
-    sprintf(buffer, filename);
+    sprintf(buffer, "%s", filename);
     h = fopen(buffer, mode);
 
     if (h == NULL)
@@ -278,7 +278,7 @@ void GLB_Extract(void)
     char linkfile[260];
 
     strncpy(linkfile, getdirectory, 260);
-    strcat(linkfile, "lnk.txt");
+    strcat(linkfile, "link.txt");
 
     for (i = 0; i < num_glbs; i++)
     {
