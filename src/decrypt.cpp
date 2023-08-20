@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <filesystem>
 #include "main.h"
 #include "decrypt.h"
 
@@ -43,6 +44,9 @@ struct glbitem_t {
 
 int num_glbs = 1;
 
+using namespace std;
+namespace fs = std::filesystem;
+
 void GLB_DeCrypt(const char* key, void* buf, int size)
 {
     char* data = (char*)buf;
@@ -69,7 +73,7 @@ FILE* GLB_OpenFile(int refail, int filenum, const char* mode)
     FILE* h;
     char buffer[PATH_MAX];
 
-    sprintf(buffer, filename);
+    sprintf(buffer, "%s", filename);
     h = fopen(buffer, mode);
 
     if (h == NULL)
@@ -259,11 +263,22 @@ void GLB_FreeAll(void)
 void GLB_Extract(void)
 {
     fitem_t* fi;
+    FILE* lf;
     int fc;
     int i, j;
     int foundflag = 0;
+    int labelflag = 0;
     char* buffer;
-    char dup[16];
+    char dup[32];
+    char noname[32];
+    char label[32];
+    char labelsave[32];
+    char getpath[260];
+    char outdirectory[260];
+    char linkfile[260];
+
+    strncpy(linkfile, getdirectory, 260);
+    strcat(linkfile, "link.txt");
 
     for (i = 0; i < num_glbs; i++)
     {
@@ -272,19 +287,60 @@ void GLB_Extract(void)
 
         for (j = 0; j < fc; j++, fi++)
         {
+            if (fi->length == 0)
+            {
+                strncpy(label, fi->name, 32);
+                strncpy(labelsave, fi->name, 32);
+            }
+
+            if (strcmp(fi->name, "") == 0)
+            {
+                sprintf(noname, "_%03x", j);
+                strcat(label, noname);
+                strcpy(fi->name, label);
+                strcpy(label, labelsave);
+                labelflag = 1;
+            }
+            else
+                labelflag = 0;
+
             if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
             {
                 foundflag = 1;
                 buffer = GLB_GetItem(j);
-
-                if (!access(fi->name, 0))
-                {
-                    sprintf(dup, "_%03x", j);
-                    strcat(fi->name, dup);
-                }
+                
+                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+                    fs::create_directory(getdirectory);
 
                 RemoveCharFromString(fi->name, '/');
-                outfile = fopen(fi->name, "wb");
+
+                strncpy(outdirectory, getdirectory, 260);
+                sprintf(getpath, "/%s", fi->name);
+                strcat(outdirectory, getpath);
+                
+                if (!access(outdirectory, 0))
+                {
+                    sprintf(dup, "_%03x", j);
+                    strcat(outdirectory, dup);
+                }
+
+                lf = fopen(linkfile, "a");
+                fseek(lf, 0, SEEK_END);
+                
+                if (!labelflag)
+                {
+                    fprintf(lf, "%s ", outdirectory);
+                    fprintf(lf, "%s\n", fi->name);
+                }
+                else
+                {
+                    fprintf(lf, "%s ", outdirectory);
+                    fprintf(lf, "%s\n", "LABEL");
+                }
+                
+                fclose(lf);
+
+                outfile = fopen(outdirectory, "wb");
 
                 if (outfile && buffer)
                 {
@@ -304,14 +360,38 @@ void GLB_Extract(void)
             {
                 buffer = GLB_GetItem(j);
 
-                if (!access(fi->name, 0))
-                {
-                    sprintf(dup, "_%03x", j);
-                    strcat(fi->name, dup);
-                }
+                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+                    fs::create_directory(getdirectory);
 
                 RemoveCharFromString(fi->name, '/');
-                outfile = fopen(fi->name, "wb");
+
+                strncpy(outdirectory, getdirectory, 260);
+                sprintf(getpath, "/%s", fi->name);
+                strcat(outdirectory, getpath);
+                
+                if (!access(outdirectory, 0))
+                {
+                    sprintf(dup, "_%03x", j);
+                    strcat(outdirectory, dup);
+                }
+
+                lf = fopen(linkfile, "a");
+                fseek(lf, 0, SEEK_END);
+                
+                if (!labelflag)
+                {
+                    fprintf(lf, "%s ", outdirectory);
+                    fprintf(lf, "%s\n", fi->name);
+                }
+                else
+                {
+                    fprintf(lf, "%s ", outdirectory);
+                    fprintf(lf, "%s\n", "LABEL");
+                }
+                
+                fclose(lf);
+
+                outfile = fopen(outdirectory, "wb");
 
                 if (outfile && buffer)
                 {
@@ -328,7 +408,7 @@ void GLB_Extract(void)
                 itemtotal++;
         }
     }
-
+   
     if (searchflag && !foundflag)
         printf("Item not found\n");
 }
@@ -383,4 +463,57 @@ void GLB_List(void)
 
     if (searchflag && !foundflag)
         printf("Item not found\n");
+}
+
+void GLB_WriteHeaderFile(void)
+{
+    fitem_t* fi;
+    int fc;
+    int filecount = 0;
+    FILE* hf;
+
+    if (access("fileids.h", 0))
+    {
+        hf = fopen("fileids.h", "a");
+        fseek(hf, 0, SEEK_END);
+        
+        fprintf(hf, "#pragma once\n");
+
+        fclose(hf);
+    }
+
+    hf = fopen("fileids.h", "a");
+    fseek(hf, 0, SEEK_END);
+
+    fprintf(hf, "\n");
+    fprintf(hf, "//%s Items\n",filename);
+    fprintf(hf, "\n");
+
+    fclose(hf);
+
+    for (int i = 0; i < num_glbs; i++)
+    {
+        fi = filedesc[i].items;
+        fc = filedesc[i].itemcount + itemcount;
+
+        for (int j = itemcount; j < fc; j++, fi++)
+        {
+            RemoveCharFromString(fi->name, '/');
+            
+            if (fi->name[0] != '\0')
+            {
+                hf = fopen("fileids.h", "a");
+                fseek(hf, 0, SEEK_END);
+
+                fprintf(hf, "#define FILE%01d%02x_%s 0x%05x\n", itemcountsave, filecount, fi->name, j);
+
+                fclose(hf);
+            }
+            
+            filecount++;
+
+            if (filecount > 0xff)
+                filecount = 0x0;
+        }
+    }
 }

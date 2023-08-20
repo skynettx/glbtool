@@ -10,16 +10,21 @@ extern char filename[260];
 extern char searchname[260];
 extern char infilename[260];
 extern char outfilename[260];
+extern char getdirectory[260];
 extern char** allinfilenames;
+extern char** alloutfilenames;
 extern int allinfilenamescnt;
 extern int itemcount;
+extern int itemcountsave;
 extern int itemtotal;
 extern int itemtotalsize;
 extern int listflag;
 extern int listallflag;
+extern int writeheaderflag;
 extern int extractflag;
 extern int encryptflag;
 extern int encryptallflag;
+extern int encryptlinkflag;
 extern int searchflag;
 extern int searchnumber;
 
@@ -30,7 +35,7 @@ struct meminfo_t
 };
 
 struct fitem_t {
-    char name[16];
+    char name[32];
     meminfo_t mem;
     int length;
     int offset;
