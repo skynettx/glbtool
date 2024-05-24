@@ -27,6 +27,7 @@ extern int encryptallflag;
 extern int encryptlinkflag;
 extern int searchflag;
 extern int searchnumber;
+extern int convgraphicflag;
 
 struct meminfo_t
 {

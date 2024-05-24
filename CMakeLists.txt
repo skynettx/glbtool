@@ -14,6 +14,8 @@ add_executable(${CMAKE_PROJECT_NAME}
 src/main.cpp
 src/decrypt.cpp
 src/encrypt.cpp
+src/graphics.cpp
+src/lodepng.cpp
 )
 
 target_link_libraries(glbtool)

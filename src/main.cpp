@@ -10,6 +10,7 @@
 #include "main.h"
 #include "decrypt.h"
 #include "encrypt.h"
+#include "graphics.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -24,6 +25,7 @@
 #endif // _MSC_VER
 
 char filename[260];
+char palfilename[260];
 char searchname[260];
 char infilename[260];
 char outfilename[260];
@@ -44,6 +46,7 @@ int encryptallflag = 0;
 int encryptlinkflag = 0;
 int searchflag = 0;
 int searchnumber = -1;
+int convgraphicflag = 0;
 
 FILE* infile;
 FILE* outfile;
@@ -113,10 +116,11 @@ int main(int argc, char** argv)
     const char* list = "-l";
     const char* listall = "-la";
     const char* writeheader = "-w";
+    const char* convgraphics = "-g";
     char line;
 
     printf("********************************************************************************\n"
-           " GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.0\n"
+           " GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.1\n"
            "********************************************************************************\n");
 
     if (!argv[1])
@@ -141,6 +145,9 @@ int main(int argc, char** argv)
                "    optional <SearchItemNameNumber> only list found items\n"
                "-w  Write header file from <INPUTFILE.GLB> and add <FILENUMBER>\n"
                "    for correct item numbers\n"
+               "-g  Convert PIC, BLK and TILE items from <INPUTFILE.GLB> and <PALETTEFILE>\n"
+               "    to PNG format\n"
+               "    optional <SearchItemNameNumber> only convert found items\n"
                "-h  Show this help\n");
         
         return 0;
@@ -390,7 +397,24 @@ int main(int argc, char** argv)
         }
     }
 
-    if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag)
+    if (strcmp(argv[1], convgraphics) == 0)
+    {
+        if (strcmp(argv[1], convgraphics) == 0)
+            convgraphicflag = 1;
+
+        if (argc == 5)
+        {
+            searchflag = 1;
+            searchnumber = atoi(argv[4]);
+            strncpy(searchname, argv[4], 260);
+
+            if (CheckStrDigit(searchname) == 0)
+                searchnumber = -1;
+        }
+    }
+
+    if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag
+        && !convgraphicflag)
     {
        printf("Command not found\n"
               "Usage: -h for help\n");
@@ -398,7 +422,7 @@ int main(int argc, char** argv)
        return 0;
     }
     
-    if (extractflag || listflag || listallflag || writeheaderflag)
+    if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag)
     {
         if (argv[2])
             strncpy(filename, argv[2], 260);
@@ -407,6 +431,31 @@ int main(int argc, char** argv)
         {
             strncpy(getdirectory, filename, 260);
             RemoveCharFromString(getdirectory, '.');
+        }
+
+        if (argv[2] && convgraphicflag)
+        {
+            if (!argv[3])
+            {
+                printf("Palette file not specified\n");
+                return 0;
+            }
+            
+            if(argv[3])
+                strncpy(palfilename, argv[3], 260);
+
+            if (access(palfilename, 0))
+            {
+                printf("Palette file not found\n");
+                return 0;
+            }
+            else
+                if (!SetPalette(palfilename))
+                    return 0;
+
+            strncpy(getdirectory, filename, 260);
+            RemoveCharFromString(getdirectory, '.');
+            sprintf(getdirectory, "%s%s", getdirectory, "graph");
         }
 
         GLB_InitSystem();
@@ -442,8 +491,16 @@ int main(int argc, char** argv)
         GLB_FreeAll();
     }
 
-    if (extractflag || listflag || listallflag || writeheaderflag)
+    if (convgraphicflag)
+    {
+        GLB_ConvertGraphics();
+        printf("Total items encoded: %02d\n", itemtotal);
+    }
+
+    if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag)
+    {
         fclose(infile);
+    }
     
     return 0;
 }

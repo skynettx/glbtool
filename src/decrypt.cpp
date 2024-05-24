@@ -8,6 +8,7 @@
 #include <filesystem>
 #include "main.h"
 #include "decrypt.h"
+#include "graphics.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -516,4 +517,176 @@ void GLB_WriteHeaderFile(void)
                 filecount = 0x0;
         }
     }
+}
+
+void GLB_ConvertGraphics(void)
+{
+    fitem_t* fi;
+    int fc;
+    int i, j;
+    int foundflag = 0;
+    int labelflag = 0;
+    char* buffer;
+    char* outbuffer;
+    char* stringend;
+    char dup[32];
+    char noname[32];
+    char label[32];
+    char labelsave[32];
+    char getpath[260];
+    char outdirectory[260];
+    GFX_PIC* picture;
+    
+    for (i = 0; i < num_glbs; i++)
+    {
+        fi = filedesc[i].items;
+        fc = filedesc[i].itemcount;
+
+        for (j = 0; j < fc; j++, fi++)
+        {
+            if (fi->length == 0)
+            {
+                strncpy(label, fi->name, 32);
+                strncpy(labelsave, fi->name, 32);
+            }
+
+            if (strcmp(fi->name, "") == 0)
+            {
+                sprintf(noname, "_%03x", j);
+                strcat(label, noname);
+                strcpy(fi->name, label);
+                strcpy(label, labelsave);
+                labelflag = 1;
+            }
+            else
+                labelflag = 0;
+
+            if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
+            {
+                foundflag = 1;
+                buffer = GLB_GetItem(j);
+
+                outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
+
+                if (!outbuffer)
+                    goto nextitem;
+
+                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+                    fs::create_directory(getdirectory);
+
+                RemoveCharFromString(fi->name, '/');
+
+                strncpy(outdirectory, getdirectory, 260);
+                sprintf(getpath, "/%s", fi->name);
+                strcat(outdirectory, getpath);
+
+                sprintf(outdirectory, "%s.png", outdirectory);
+
+                if (!access(outdirectory, 0))
+                {
+                    int lstring;
+                    lstring = strlen(outdirectory);
+                    outdirectory[lstring - 4] = '\0';
+
+                    sprintf(dup, "_%03x", j);
+                    strcat(outdirectory, dup);
+                    sprintf(outdirectory, "%s.png", outdirectory);
+                }
+
+                picture = (GFX_PIC*)buffer;
+                
+                if (outbuffer)
+                {
+                    WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
+                    free(outbuffer);
+                }
+
+                if (searchflag && fi->name[0] != '\0')
+                {
+                    printf("Decoding item: %s\n", fi->name);
+                    
+                    if(picture->type == GPIC)
+                        printf("Itemtype: GPIC\n");
+                    
+                    if (picture->type == GSPRITE)
+                        printf("Itemtype: GSPRITE\n");
+
+                    printf("Width of item: %0d\n", picture->width);
+                    printf("Height of item: %0d\n", picture->height);
+                    printf("Encoding item to: %s\n", outdirectory);
+                    
+                    if (buffer)
+                        free(buffer);
+                    
+                    itemtotal++;
+                }
+            }
+
+            if (!searchflag)
+            {
+                buffer = GLB_GetItem(j);
+
+                outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
+
+                if (!outbuffer)
+                    goto nextitem;
+
+                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+                    fs::create_directory(getdirectory);
+
+                RemoveCharFromString(fi->name, '/');
+
+                strncpy(outdirectory, getdirectory, 260);
+                sprintf(getpath, "/%s", fi->name);
+                strcat(outdirectory, getpath);
+
+                sprintf(outdirectory, "%s.png", outdirectory);
+
+                if (!access(outdirectory, 0))
+                {
+                    int lstring;
+                    lstring = strlen(outdirectory);
+                    outdirectory[lstring - 4] = '\0';
+
+                    sprintf(dup, "_%03x", j);
+                    strcat(outdirectory, dup);
+                    sprintf(outdirectory, "%s.png", outdirectory);
+                }
+
+                picture = (GFX_PIC*)buffer;
+                
+                if (outbuffer)
+                {
+                    WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
+                    free(outbuffer);
+                }
+
+                if (fi->name[0] != '\0')
+                {
+                    printf("Decoding item: %s\n", fi->name);
+                    
+                    if (picture->type == GPIC)
+                        printf("Itemtype: GPIC\n");
+
+                    if (picture->type == GSPRITE)
+                        printf("Itemtype: GSPRITE\n");
+
+                    printf("Width of item: %0d\n", picture->width);
+                    printf("Height of item: %0d\n", picture->height);
+                    printf("Encoding item to: %s\n", outdirectory);
+
+                    if (buffer)
+                        free(buffer);
+                }
+            }
+        
+            if (fi->name[0] != '\0' && !searchflag)
+                itemtotal++;
+        
+        nextitem:;
+        }
+    }
+    
+    if (searchflag && !foundflag)
+        printf("Item not found\n");
 }

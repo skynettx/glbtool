@@ -20,4 +20,4 @@ make
 
 ## Thanks
 Special thanks to [Yggdrasill](https://github.com/Yggdrasill) for the encryption part from glbtools.
-
+Also thanks for [LodePNG](https://github.com/lvandeve/lodepng) used in this project.
