@@ -61,15 +61,15 @@ int SetPalette(char* palfilename)
 	{
 		printf("Not a valid palette file\n");
 		fclose(palfile);
-		
+
 		return 0;
 	}
 
 	inpalette = (uint8_t*)malloc(lengthpalfile);
 
 	if (inpalette)
-	    fread(inpalette, lengthpalfile, 1, palfile);
-	
+		fread(inpalette, lengthpalfile, 1, palfile);
+
 	for (int i = 0; i < 256; i++)
 	{
 		palette[i].r = *inpalette++ << 2;
@@ -79,7 +79,7 @@ int SetPalette(char* palfilename)
 	}
 
 	fclose(palfile);
-	
+
 	return 1;
 }
 
@@ -114,17 +114,17 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 			return 0;
 		}
 
-        memcpy(rawvga, item + HEADERSIZE, itemlength - HEADERSIZE);
+		memcpy(rawvga, item + HEADERSIZE, itemlength - HEADERSIZE);
 
-        int pos = 0;
-        int n = 0;
-		
+		int pos = 0;
+		int n = 0;
+
 		outbuf = (char*)malloc(4 * (picture->width * picture->height));
 
 		if (picture->type == GPIC)
 		{
 			int transcnt = 0;
-			
+
 			for (int i = 0; i < picture->width * picture->height; i++, transcnt++)
 			{
 				outbuf[transcnt] = 0;
@@ -135,7 +135,7 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				transcnt++;
 				outbuf[transcnt] = 0;
 			}
-			
+
 			for (int i = 0; i < picture->width * picture->height; i++, pos++)
 			{
 				unsigned char pixel = rawvga[pos];
@@ -146,7 +146,7 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				n++;
 				outbuf[n] = palette[pixel].b;
 				n++;
-                outbuf[n] = palette[pixel].a;
+				outbuf[n] = palette[pixel].a;
 				n++;
 			}
 		}
@@ -167,7 +167,7 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 			int block_end = sprite->length;
 
 			int transcnt = 0;
-			
+
 			for (int i = 0; i < picture->width * picture->height; i++, transcnt++)
 			{
 				outbuf[transcnt] = 0;
@@ -179,7 +179,7 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				outbuf[transcnt] = 0;
 			}
 
-            while (1)
+			while (1)
 			{
 				if (sprite->offset == 0xFFFFFFFF && sprite->length == 0xFFFFFFFF)
 				{
@@ -199,7 +199,7 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 					n++;
 					outbuf[n] = palette[pixel].b;
 					n++;
-                    outbuf[n] = palette[pixel].a;
+					outbuf[n] = palette[pixel].a;
 					n++;
 				}
 
@@ -210,11 +210,11 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 
 				sprite = (GFX_SPRITE*)spritepic;
 				block_end = sprite->length;
-            }
+			}
 		}
-		
+
 		return outbuf;
-    }
+	}
 
 	return 0;
 }
