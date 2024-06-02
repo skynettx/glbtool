@@ -44,6 +44,14 @@ typedef struct
 	int length;             // LENGTH OF LINE
 }GFX_SPRITE;
 
+typedef struct
+{
+	unsigned short opt;
+	unsigned short fill;
+	unsigned short offset;
+	unsigned short length;
+}ANIMLINE;
+
 lodepng::State statepng;
 
 int SetPalette(char* palfilename)
@@ -110,7 +118,6 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 			picture->type < 0 || picture->type > 1 ||
 			picture->opt1 < 0 || picture->opt2 < 0)
 		{
-			printf("%s is not a PIC, BLK or TILE item\n", itemname);
 			return 0;
 		}
 
@@ -212,6 +219,220 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				block_end = sprite->length;
 			}
 		}
+
+		return outbuf;
+	}
+
+	return 0;
+}
+
+static int VerifyAGX(char* item, int mode, int itemlength)
+{
+	ANIMLINE* verify;
+	char* getitem;
+
+	verify = (ANIMLINE*)item;
+
+	if (itemlength == 8)
+	{
+		if (verify->opt == 0 && verify->fill == 0 && verify->length == 0 && verify->offset == 0)
+			return 1;
+		else
+			return 0;
+	}
+	else if (mode == 0 && itemlength > 8)
+	{
+		getitem = (char*)malloc(itemlength + 8);
+		memcpy(getitem, item + 1, itemlength - 1);
+		verify = (ANIMLINE*)getitem;
+
+		if (verify->opt != 1 || verify->length == 0 || verify->offset == 0)
+			return 0;
+
+		if (verify->length > itemlength)
+			return 0;
+
+		memcpy(getitem, item + 9 + verify->length, itemlength - verify->length + 9);
+		verify = (ANIMLINE*)getitem;
+
+		if (verify->opt == 1)
+		{
+			if (verify->length == 0 || verify->offset == 0 || verify->length > itemlength)
+				return 0;
+
+			return 1;
+		}
+		else if (verify->opt == 0)
+		{
+			if (verify->length > 0 || verify->offset > 0 || verify->length > itemlength)
+				return 0;
+
+			return 1;
+		}
+		else if (verify->opt > 1 || verify->opt < 0)
+			return 0;
+		else
+			return 1;
+	}
+	else if (mode == 1 && itemlength > 8)
+	{
+		getitem = (char*)malloc(itemlength + 8);
+		memcpy(getitem, item, itemlength);
+		verify = (ANIMLINE*)getitem;
+
+		if (verify->opt != 1 || verify->length == 0 || verify->offset == 0)
+			return 0;
+
+		if (verify->length > itemlength)
+			return 0;
+
+		memcpy(getitem, item + 8 + verify->length, itemlength - verify->length + 8);
+		verify = (ANIMLINE*)getitem;
+
+		if (verify->opt == 1)
+		{
+			if (verify->length == 0 || verify->offset == 0 || verify->length > itemlength)
+				return 0;
+
+			return 1;
+		}
+		else if (verify->opt == 0)
+		{
+			if (verify->length > 0 || verify->offset > 0 || verify->length > itemlength)
+				return 0;
+
+			return 1;
+		}
+		else if (verify->opt > 1 || verify->opt < 0)
+			return 0;
+		else
+			return 1;
+	}
+	else
+		return 0;
+}
+
+char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
+{
+	ANIMLINE* agx;
+	ANIMLINE* verifyagx;
+	char* bufferpic;
+	char* rawvga;
+	char* startagx;
+	int readstart;
+	int startoffset;
+	int emptyframe = 0;
+
+	if (itemlength < 8)
+		return 0;
+
+	startagx = (char*)malloc(itemlength);
+	memcpy(startagx, item, itemlength);
+
+	readstart = startagx[0];
+	verifyagx = (ANIMLINE*)startagx;
+
+	if (!VerifyAGX(item, readstart, itemlength))
+	{
+		return 0;
+	}
+
+	if (verifyagx->opt == 1 || itemlength == 8)
+	{
+		startoffset = 8;
+		readstart = 0;
+	}
+	else
+	{
+		startoffset = 9;
+		readstart = 1;
+	}
+
+	if (verifyagx->fill == 0 && verifyagx->length == 0 &&
+		verifyagx->offset == 0 && verifyagx->opt == 0 &&
+		itemlength == 8)
+		emptyframe = 1;
+
+	bufferpic = (char*)malloc(itemlength);
+	rawvga = (char*)malloc(itemlength - startoffset);
+
+	if (bufferpic)
+	{
+		memcpy(bufferpic, item + readstart, itemlength - readstart);
+		agx = (ANIMLINE*)bufferpic;
+
+		if (!emptyframe)
+			memcpy(rawvga, item + startoffset, itemlength - startoffset);
+
+		int pos = 0;
+		int n = 0;
+		char* outbuf;
+
+		outbuf = (char*)malloc(4 * (320 * 200));
+
+		char* readagxpos;
+		int startpos = startoffset;
+
+		readagxpos = (char*)malloc(itemlength - startoffset);
+
+		if (!emptyframe)
+			memcpy(readagxpos, item + startoffset, itemlength - startoffset);
+
+		int block_end = agx->length;
+		int transcnt = 0;
+
+		for (int i = 0; i < 320 * 200; i++, transcnt++)
+		{
+			outbuf[transcnt] = 0;
+			transcnt++;
+			outbuf[transcnt] = 0;
+			transcnt++;
+			outbuf[transcnt] = 0;
+			transcnt++;
+
+			if (readstart)
+				outbuf[transcnt] = 255;
+			else
+				outbuf[transcnt] = 0;
+		}
+
+		if (emptyframe)
+			goto drawemptyframe;
+
+		while (1)
+		{
+			if (!agx->opt)
+			{
+				break;
+			}
+
+			n = agx->offset * 4;
+
+			for (int i = 0; i < block_end; i++, pos++)
+			{
+				unsigned char pixel = rawvga[pos];
+
+				outbuf[n] = palette[pixel].r;
+				n++;
+				outbuf[n] = palette[pixel].g;
+				n++;
+				outbuf[n] = palette[pixel].b;
+				n++;
+				outbuf[n] = palette[pixel].a;
+				n++;
+			}
+
+			startpos += block_end;
+			pos += 8;
+
+			memcpy(readagxpos, item + startpos, itemlength - startpos);
+			agx = (ANIMLINE*)readagxpos;
+			block_end = agx->length;
+
+			startpos += 8;
+		}
+
+	drawemptyframe:;
 
 		return outbuf;
 	}

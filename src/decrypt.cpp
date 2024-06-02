@@ -23,11 +23,11 @@
 #endif // _MSC_VER
 
 struct filedesc_t {
-    char path[PATH_MAX];
-    fitem_t* items;
-    int itemcount;
-    FILE* handle;
-    const char* mode;
+	char path[PATH_MAX];
+	fitem_t* items;
+	int itemcount;
+	FILE* handle;
+	const char* mode;
 };
 
 #define GLBMAXFILES 15
@@ -36,10 +36,10 @@ filedesc_t filedesc[GLBMAXFILES];
 
 #pragma pack(push, 1)
 struct glbitem_t {
-    int crypt;
-    int offset;
-    int length;
-    char name[16];
+	int crypt;
+	int offset;
+	int length;
+	char name[16];
 };
 #pragma pack(pop)
 
@@ -50,643 +50,693 @@ namespace fs = std::filesystem;
 
 void GLB_DeCrypt(const char* key, void* buf, int size)
 {
-    char* data = (char*)buf;
-    int keylen, vbx;
-    char vc, vd;
+	char* data = (char*)buf;
+	int keylen, vbx;
+	char vc, vd;
 
-    keylen = strlen(key);
-    vbx = 25 % keylen;
-    vc = key[vbx];
+	keylen = strlen(key);
+	vbx = 25 % keylen;
+	vc = key[vbx];
 
-    while (size--)
-    {
-        vd = *data;
-        *data++ = (vd - key[vbx] - vc) % 256;
-        vc = vd;
+	while (size--)
+	{
+		vd = *data;
+		*data++ = (vd - key[vbx] - vc) % 256;
+		vc = vd;
 
-        if (++vbx >= keylen)
-            vbx = 0;
-    }
+		if (++vbx >= keylen)
+			vbx = 0;
+	}
 }
 
 FILE* GLB_OpenFile(int refail, int filenum, const char* mode)
 {
-    FILE* h;
-    char buffer[PATH_MAX];
+	FILE* h;
+	char buffer[PATH_MAX];
 
-    sprintf(buffer, "%s", filename);
-    h = fopen(buffer, mode);
+	sprintf(buffer, "%s", filename);
+	h = fopen(buffer, mode);
 
-    if (h == NULL)
-    {
-        printf("Input file not found\n");
-        EXIT_Error("Input file not found");
-    }
+	if (h == NULL)
+	{
+		printf("Input file not found\n");
+		EXIT_Error("Input file not found");
+	}
 
-    strcpy(filedesc[filenum].path, buffer);
-    filedesc[filenum].mode = mode;
-    filedesc[filenum].handle = h;
+	strcpy(filedesc[filenum].path, buffer);
+	filedesc[filenum].mode = mode;
+	filedesc[filenum].handle = h;
 
-    return h;
+	return h;
 }
 
 int GLB_NumItems(int filenum)
 {
-    glbitem_t head;
+	glbitem_t head;
 
-    infile = GLB_OpenFile(1, filenum, "rb");
+	infile = GLB_OpenFile(1, filenum, "rb");
 
-    if (infile == NULL)
-        return 0;
+	if (infile == NULL)
+		return 0;
 
-    fseek(infile, 0, SEEK_SET);
+	fseek(infile, 0, SEEK_SET);
 
-    if (!fread(&head, sizeof(head), 1, infile))
-        EXIT_Error("GLB_NumItems: Read failed!");
+	if (!fread(&head, sizeof(head), 1, infile))
+		EXIT_Error("GLB_NumItems: Read failed!");
 
-    GLB_DeCrypt(serial, &head, sizeof(head));
+	GLB_DeCrypt(serial, &head, sizeof(head));
 
-    return head.offset;
+	return head.offset;
 }
 
 void GLB_LoadIDT(filedesc_t* fd)
 {
-    glbitem_t buf[10];
-    fitem_t* ve;
-    int i, j, k;
+	glbitem_t buf[10];
+	fitem_t* ve;
+	int i, j, k;
 
-    ve = fd->items;
-    fseek(infile, sizeof(glbitem_t), SEEK_SET);
+	ve = fd->items;
+	fseek(infile, sizeof(glbitem_t), SEEK_SET);
 
-    for (i = 0; i < fd->itemcount; i += j)
-    {
-        j = fd->itemcount - i;
+	for (i = 0; i < fd->itemcount; i += j)
+	{
+		j = fd->itemcount - i;
 
-        if ((unsigned int)j > 10)
-            j = 10;
+		if ((unsigned int)j > 10)
+			j = 10;
 
-        fread(buf, sizeof(glbitem_t), j, infile);
+		fread(buf, sizeof(glbitem_t), j, infile);
 
-        for (k = 0; k < j; k++)
-        {
-            GLB_DeCrypt(serial, &buf[k], sizeof(glbitem_t));
+		for (k = 0; k < j; k++)
+		{
+			GLB_DeCrypt(serial, &buf[k], sizeof(glbitem_t));
 
-            if (buf[k].crypt == 1)
-                ve->flags |= 0x40000000;
+			if (buf[k].crypt == 1)
+				ve->flags |= 0x40000000;
 
-            ve->length = buf[k].length;
-            ve->offset = buf[k].offset;
-            memcpy(ve->name, buf[k].name, 16);
-            ve++;
-        }
-    }
+			ve->length = buf[k].length;
+			ve->offset = buf[k].offset;
+			memcpy(ve->name, buf[k].name, 16);
+			ve++;
+		}
+	}
 }
 
 void GLB_InitSystem(void)
 {
-    int i, j;
-    filedesc_t* fd;
+	int i, j;
+	filedesc_t* fd;
 
-    memset(filedesc, 0, sizeof(filedesc));
+	memset(filedesc, 0, sizeof(filedesc));
 
-    for (i = 0; i < num_glbs; i++)
-    {
-        fd = &filedesc[i];
-        j = GLB_NumItems(i);
+	for (i = 0; i < num_glbs; i++)
+	{
+		fd = &filedesc[i];
+		j = GLB_NumItems(i);
 
-        if (j)
-        {
-            fd->itemcount = j;
-            fd->items = (fitem_t*)calloc(j, sizeof(fitem_t));
+		if (j)
+		{
+			fd->itemcount = j;
+			fd->items = (fitem_t*)calloc(j, sizeof(fitem_t));
 
-            if (!fd->items)
-            {
-                fclose(infile);
+			if (!fd->items)
+			{
+				fclose(infile);
 
-                printf("Input file format not valid\n");
-                EXIT_Error("Input file format not valid");
-            }
+				printf("Input file format not valid\n");
+				EXIT_Error("Input file format not valid");
+			}
 
-            GLB_LoadIDT(fd);
-        }
-    }
+			GLB_LoadIDT(fd);
+		}
+	}
 }
 
 int GLB_Load(char* inmem, int filenum, int itemnum)
 {
-    fitem_t* fi;
-    FILE* handle = filedesc[filenum].handle;
+	fitem_t* fi;
+	FILE* handle = filedesc[filenum].handle;
 
-    if (!handle)
-        return 0;
+	if (!handle)
+		return 0;
 
-    fi = &filedesc[filenum].items[itemnum];
+	fi = &filedesc[filenum].items[itemnum];
 
-    if (inmem)
-    {
-        if (fi->mem.ptr && inmem != fi->mem.ptr)
-        {
-            memcpy(inmem, fi->mem.ptr, fi->length);
-        }
-        else
-        {
-            fseek(handle, fi->offset, SEEK_SET);
-            fread(inmem, fi->length, 1, handle);
-            if (fi->flags & 0x40000000)
-                GLB_DeCrypt(serial, inmem, fi->length);
-        }
-    }
+	if (inmem)
+	{
+		if (fi->mem.ptr && inmem != fi->mem.ptr)
+		{
+			memcpy(inmem, fi->mem.ptr, fi->length);
+		}
+		else
+		{
+			fseek(handle, fi->offset, SEEK_SET);
+			fread(inmem, fi->length, 1, handle);
+			if (fi->flags & 0x40000000)
+				GLB_DeCrypt(serial, inmem, fi->length);
+		}
+	}
 
-    return fi->length;
+	return fi->length;
 }
 
 char* GLB_FetchItem(int handle, int mode)
 {
-    char* m;
-    fitem_t* fi;
+	char* m;
+	fitem_t* fi;
 
-    if (handle == -1)
-        return NULL;
+	if (handle == -1)
+		return NULL;
 
-    uint16_t f = (handle >> 16) & 0xffff;
-    uint16_t n = (handle >> 0) & 0xffff;
-    fi = &filedesc[f].items[n];
+	uint16_t f = (handle >> 16) & 0xffff;
+	uint16_t n = (handle >> 0) & 0xffff;
+	fi = &filedesc[f].items[n];
 
-    if (mode == 2)
-        fi->flags |= 0x80000000;
+	if (mode == 2)
+		fi->flags |= 0x80000000;
 
-    if (!fi->mem.ptr)
-    {
-        fi->lock = 0;
+	if (!fi->mem.ptr)
+	{
+		fi->lock = 0;
 
-        if (fi->length)
-        {
-            m = (char*)calloc(fi->length, 1);
+		if (fi->length)
+		{
+			m = (char*)calloc(fi->length, 1);
 
-            if (mode == 2)
-                fi->lock = 1;
-            fi->mem.ptr = m;
+			if (mode == 2)
+				fi->lock = 1;
+			fi->mem.ptr = m;
 
-            if (fi->mem.ptr)
-            {
-                GLB_Load(fi->mem.ptr, f, n);
-            }
-        }
-    }
+			if (fi->mem.ptr)
+			{
+				GLB_Load(fi->mem.ptr, f, n);
+			}
+		}
+	}
 
-    return fi->mem.ptr;
+	return fi->mem.ptr;
 }
 
 char* GLB_GetItem(int handle)
 {
-    return GLB_FetchItem(handle, 1);
+	return GLB_FetchItem(handle, 1);
 }
 
 void GLB_FreeAll(void)
 {
-    int i, j;
-    fitem_t* fi;
-    for (i = 0; i < num_glbs; i++)
-    {
-        fi = filedesc[i].items;
-        for (j = 0; j < filedesc[i].itemcount; j++)
-        {
-            if (fi->mem.ptr && !(fi->flags & 0x80000000))
-            {
-                free(fi->mem.ptr);
-                fi->mem.ptr = NULL;
-            }
-            fi++;
-        }
-    }
+	int i, j;
+	fitem_t* fi;
+	for (i = 0; i < num_glbs; i++)
+	{
+		fi = filedesc[i].items;
+		for (j = 0; j < filedesc[i].itemcount; j++)
+		{
+			if (fi->mem.ptr && !(fi->flags & 0x80000000))
+			{
+				free(fi->mem.ptr);
+				fi->mem.ptr = NULL;
+			}
+			fi++;
+		}
+	}
 }
 
 void GLB_Extract(void)
 {
-    fitem_t* fi;
-    FILE* lf;
-    int fc;
-    int i, j;
-    int foundflag = 0;
-    int labelflag = 0;
-    char* buffer;
-    char dup[32];
-    char noname[32];
-    char label[32];
-    char labelsave[32];
-    char getpath[260];
-    char outdirectory[260];
-    char linkfile[260];
+	fitem_t* fi;
+	FILE* lf;
+	int fc;
+	int i, j;
+	int foundflag = 0;
+	int labelflag = 0;
+	char* buffer;
+	char dup[32];
+	char noname[32];
+	char label[32];
+	char labelsave[32];
+	char getpath[260];
+	char outdirectory[260];
+	char linkfile[260];
 
-    strncpy(linkfile, getdirectory, 260);
-    strcat(linkfile, "link.txt");
+	strncpy(linkfile, getdirectory, 260);
+	strcat(linkfile, "link.txt");
 
-    for (i = 0; i < num_glbs; i++)
-    {
-        fi = filedesc[i].items;
-        fc = filedesc[i].itemcount;
+	for (i = 0; i < num_glbs; i++)
+	{
+		fi = filedesc[i].items;
+		fc = filedesc[i].itemcount;
 
-        for (j = 0; j < fc; j++, fi++)
-        {
-            if (fi->length == 0)
-            {
-                strncpy(label, fi->name, 32);
-                strncpy(labelsave, fi->name, 32);
-            }
+		for (j = 0; j < fc; j++, fi++)
+		{
+			if (fi->length == 0)
+			{
+				strncpy(label, fi->name, 32);
+				strncpy(labelsave, fi->name, 32);
+			}
 
-            if (strcmp(fi->name, "") == 0)
-            {
-                sprintf(noname, "_%03x", j);
-                strcat(label, noname);
-                strcpy(fi->name, label);
-                strcpy(label, labelsave);
-                labelflag = 1;
-            }
-            else
-                labelflag = 0;
+			if (strcmp(fi->name, "") == 0)
+			{
+				sprintf(noname, "_%03x", j);
+				strcat(label, noname);
+				strcpy(fi->name, label);
+				strcpy(label, labelsave);
+				labelflag = 1;
+			}
+			else
+				labelflag = 0;
 
-            if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
-            {
-                foundflag = 1;
-                buffer = GLB_GetItem(j);
-                
-                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
-                    fs::create_directory(getdirectory);
+			if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
+			{
+				foundflag = 1;
+				buffer = GLB_GetItem(j);
 
-                RemoveCharFromString(fi->name, '/');
+				if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+					fs::create_directory(getdirectory);
 
-                strncpy(outdirectory, getdirectory, 260);
-                sprintf(getpath, "/%s", fi->name);
-                strcat(outdirectory, getpath);
-                
-                if (!access(outdirectory, 0))
-                {
-                    sprintf(dup, "_%03x", j);
-                    strcat(outdirectory, dup);
-                }
+				RemoveCharFromString(fi->name, '/');
 
-                lf = fopen(linkfile, "a");
-                fseek(lf, 0, SEEK_END);
-                
-                if (!labelflag)
-                {
-                    fprintf(lf, "%s ", outdirectory);
-                    fprintf(lf, "%s\n", fi->name);
-                }
-                else
-                {
-                    fprintf(lf, "%s ", outdirectory);
-                    fprintf(lf, "%s\n", "LABEL");
-                }
-                
-                fclose(lf);
+				strncpy(outdirectory, getdirectory, 260);
+				sprintf(getpath, "/%s", fi->name);
+				strcat(outdirectory, getpath);
 
-                outfile = fopen(outdirectory, "wb");
+				if (!access(outdirectory, 0))
+				{
+					sprintf(dup, "_%03x", j);
+					strcat(outdirectory, dup);
+				}
 
-                if (outfile && buffer)
-                {
-                    fwrite(buffer, fi->length, 1, outfile);
-                    free(buffer);
-                    fclose(outfile);
-                }
+				lf = fopen(linkfile, "a");
+				fseek(lf, 0, SEEK_END);
 
-                if (searchflag && fi->name[0] != '\0')
-                {
-                    printf("Decrypting item: %s\n", fi->name);
-                    itemtotal++;
-                }
-            }
+				if (!labelflag)
+				{
+					fprintf(lf, "%s ", outdirectory);
+					fprintf(lf, "%s\n", fi->name);
+				}
+				else
+				{
+					fprintf(lf, "%s ", outdirectory);
+					fprintf(lf, "%s\n", "LABEL");
+				}
 
-            if (!searchflag)
-            {
-                buffer = GLB_GetItem(j);
+				fclose(lf);
 
-                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
-                    fs::create_directory(getdirectory);
+				outfile = fopen(outdirectory, "wb");
 
-                RemoveCharFromString(fi->name, '/');
+				if (outfile && buffer)
+				{
+					fwrite(buffer, fi->length, 1, outfile);
+					free(buffer);
+					fclose(outfile);
+				}
 
-                strncpy(outdirectory, getdirectory, 260);
-                sprintf(getpath, "/%s", fi->name);
-                strcat(outdirectory, getpath);
-                
-                if (!access(outdirectory, 0))
-                {
-                    sprintf(dup, "_%03x", j);
-                    strcat(outdirectory, dup);
-                }
+				if (searchflag && fi->name[0] != '\0')
+				{
+					printf("Decrypting item: %s\n", fi->name);
+					itemtotal++;
+				}
+			}
 
-                lf = fopen(linkfile, "a");
-                fseek(lf, 0, SEEK_END);
-                
-                if (!labelflag)
-                {
-                    fprintf(lf, "%s ", outdirectory);
-                    fprintf(lf, "%s\n", fi->name);
-                }
-                else
-                {
-                    fprintf(lf, "%s ", outdirectory);
-                    fprintf(lf, "%s\n", "LABEL");
-                }
-                
-                fclose(lf);
+			if (!searchflag)
+			{
+				buffer = GLB_GetItem(j);
 
-                outfile = fopen(outdirectory, "wb");
+				if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+					fs::create_directory(getdirectory);
 
-                if (outfile && buffer)
-                {
-                    fwrite(buffer, fi->length, 1, outfile);
-                    free(buffer);
-                    fclose(outfile);
-                }
+				RemoveCharFromString(fi->name, '/');
 
-                if (fi->name[0] != '\0')
-                    printf("Decrypting item: %s\n", fi->name);
-            }
+				strncpy(outdirectory, getdirectory, 260);
+				sprintf(getpath, "/%s", fi->name);
+				strcat(outdirectory, getpath);
 
-            if (fi->name[0] != '\0' && !searchflag)
-                itemtotal++;
-        }
-    }
-   
-    if (searchflag && !foundflag)
-        printf("Item not found\n");
+				if (!access(outdirectory, 0))
+				{
+					sprintf(dup, "_%03x", j);
+					strcat(outdirectory, dup);
+				}
+
+				lf = fopen(linkfile, "a");
+				fseek(lf, 0, SEEK_END);
+
+				if (!labelflag)
+				{
+					fprintf(lf, "%s ", outdirectory);
+					fprintf(lf, "%s\n", fi->name);
+				}
+				else
+				{
+					fprintf(lf, "%s ", outdirectory);
+					fprintf(lf, "%s\n", "LABEL");
+				}
+
+				fclose(lf);
+
+				outfile = fopen(outdirectory, "wb");
+
+				if (outfile && buffer)
+				{
+					fwrite(buffer, fi->length, 1, outfile);
+					free(buffer);
+					fclose(outfile);
+				}
+
+				if (fi->name[0] != '\0')
+					printf("Decrypting item: %s\n", fi->name);
+			}
+
+			if (fi->name[0] != '\0' && !searchflag)
+				itemtotal++;
+		}
+	}
+
+	if (searchflag && !foundflag)
+		printf("Item not found\n");
 }
 
 void GLB_List(void)
 {
-    fitem_t* fi;
-    int fc;
-    int i, j;
-    int foundflag = 0;
+	fitem_t* fi;
+	int fc;
+	int i, j;
+	int foundflag = 0;
 
-    for (i = 0; i < num_glbs; i++)
-    {
-        fi = filedesc[i].items;
-        fc = filedesc[i].itemcount + itemcount;
+	for (i = 0; i < num_glbs; i++)
+	{
+		fi = filedesc[i].items;
+		fc = filedesc[i].itemcount + itemcount;
 
-        for (j = itemcount; j < fc; j++, fi++)
-        {
-            if (fi->name[0] != '\0' && !listallflag)
-            {
-                if ((strcmp(fi->name, searchname) == 0 && searchflag) || (j == searchnumber && searchflag))
-                {
-                    foundflag = 1;
-                    printf("ItemNum Dec: %02d, ItemNum Hex: 0x%02x, Size: %d Byte, ItemName: %s\n", j, j, fi->length, fi->name);
-                    itemtotal++;
-                }
+		for (j = itemcount; j < fc; j++, fi++)
+		{
+			if (fi->name[0] != '\0' && !listallflag)
+			{
+				if ((strcmp(fi->name, searchname) == 0 && searchflag) || (j == searchnumber && searchflag))
+				{
+					foundflag = 1;
+					printf("ItemNum Dec: %02d, ItemNum Hex: 0x%02x, Size: %d Byte, ItemName: %s\n", j, j, fi->length, fi->name);
+					itemtotal++;
+				}
 
-                if (!searchflag)
-                {
-                    printf("ItemNum Dec: %02d, ItemNum Hex: 0x%02x, Size: %d Byte, ItemName: %s\n", j, j, fi->length, fi->name);
-                    itemtotal++;
-                }
-            }
+				if (!searchflag)
+				{
+					printf("ItemNum Dec: %02d, ItemNum Hex: 0x%02x, Size: %d Byte, ItemName: %s\n", j, j, fi->length, fi->name);
+					itemtotal++;
+				}
+			}
 
-            if (listallflag)
-            {
-                if ((strcmp(fi->name, searchname) == 0 && searchflag) || (j == searchnumber && searchflag))
-                {
-                    foundflag = 1;
-                    printf("ItemNum Dec: %02d, ItemNum Hex: 0x%02x, Size: %d Byte, ItemName: %s\n", j, j, fi->length, fi->name);
-                    itemtotal++;
-                }
+			if (listallflag)
+			{
+				if ((strcmp(fi->name, searchname) == 0 && searchflag) || (j == searchnumber && searchflag))
+				{
+					foundflag = 1;
+					printf("ItemNum Dec: %02d, ItemNum Hex: 0x%02x, Size: %d Byte, ItemName: %s\n", j, j, fi->length, fi->name);
+					itemtotal++;
+				}
 
-                if (!searchflag)
-                {
-                    printf("ItemNum Dec: %02d, ItemNum Hex: 0x%02x, Size: %d Byte, ItemName: %s\n", j, j, fi->length, fi->name);
-                    itemtotal++;
-                }
-            }
-        }
-    }
+				if (!searchflag)
+				{
+					printf("ItemNum Dec: %02d, ItemNum Hex: 0x%02x, Size: %d Byte, ItemName: %s\n", j, j, fi->length, fi->name);
+					itemtotal++;
+				}
+			}
+		}
+	}
 
-    if (searchflag && !foundflag)
-        printf("Item not found\n");
+	if (searchflag && !foundflag)
+		printf("Item not found\n");
 }
 
 void GLB_WriteHeaderFile(void)
 {
-    fitem_t* fi;
-    int fc;
-    int filecount = 0;
-    FILE* hf;
+	fitem_t* fi;
+	int fc;
+	int filecount = 0;
+	FILE* hf;
 
-    if (access("fileids.h", 0))
-    {
-        hf = fopen("fileids.h", "a");
-        fseek(hf, 0, SEEK_END);
-        
-        fprintf(hf, "#pragma once\n");
+	if (access("fileids.h", 0))
+	{
+		hf = fopen("fileids.h", "a");
+		fseek(hf, 0, SEEK_END);
 
-        fclose(hf);
-    }
+		fprintf(hf, "#pragma once\n");
 
-    hf = fopen("fileids.h", "a");
-    fseek(hf, 0, SEEK_END);
+		fclose(hf);
+	}
 
-    fprintf(hf, "\n");
-    fprintf(hf, "//%s Items\n",filename);
-    fprintf(hf, "\n");
+	hf = fopen("fileids.h", "a");
+	fseek(hf, 0, SEEK_END);
 
-    fclose(hf);
+	fprintf(hf, "\n");
+	fprintf(hf, "//%s Items\n", filename);
+	fprintf(hf, "\n");
 
-    for (int i = 0; i < num_glbs; i++)
-    {
-        fi = filedesc[i].items;
-        fc = filedesc[i].itemcount + itemcount;
+	fclose(hf);
 
-        for (int j = itemcount; j < fc; j++, fi++)
-        {
-            RemoveCharFromString(fi->name, '/');
-            
-            if (fi->name[0] != '\0')
-            {
-                hf = fopen("fileids.h", "a");
-                fseek(hf, 0, SEEK_END);
+	for (int i = 0; i < num_glbs; i++)
+	{
+		fi = filedesc[i].items;
+		fc = filedesc[i].itemcount + itemcount;
 
-                fprintf(hf, "#define FILE%01d%02x_%s 0x%05x\n", itemcountsave, filecount, fi->name, j);
+		for (int j = itemcount; j < fc; j++, fi++)
+		{
+			RemoveCharFromString(fi->name, '/');
 
-                fclose(hf);
-            }
-            
-            filecount++;
+			if (fi->name[0] != '\0')
+			{
+				hf = fopen("fileids.h", "a");
+				fseek(hf, 0, SEEK_END);
 
-            if (filecount > 0xff)
-                filecount = 0x0;
-        }
-    }
+				fprintf(hf, "#define FILE%01d%02x_%s 0x%05x\n", itemcountsave, filecount, fi->name, j);
+
+				fclose(hf);
+			}
+
+			filecount++;
+
+			if (filecount > 0xff)
+				filecount = 0x0;
+		}
+	}
 }
 
 void GLB_ConvertGraphics(void)
 {
-    fitem_t* fi;
-    int fc;
-    int i, j;
-    int foundflag = 0;
-    int labelflag = 0;
-    char* buffer;
-    char* outbuffer;
-    char* stringend;
-    char dup[32];
-    char noname[32];
-    char label[32];
-    char labelsave[32];
-    char getpath[260];
-    char outdirectory[260];
-    GFX_PIC* picture;
-    
-    for (i = 0; i < num_glbs; i++)
-    {
-        fi = filedesc[i].items;
-        fc = filedesc[i].itemcount;
+	fitem_t* fi;
+	int fc;
+	int i, j;
+	int foundflag = 0;
+	int labelflag = 0;
+	int agxmode;
+	char* buffer;
+	char* outbuffer;
+	char dup[32];
+	char noname[32];
+	char label[32];
+	char labelsave[32];
+	char getpath[260];
+	char outdirectory[260];
+	GFX_PIC* picture;
 
-        for (j = 0; j < fc; j++, fi++)
-        {
-            if (fi->length == 0)
-            {
-                strncpy(label, fi->name, 32);
-                strncpy(labelsave, fi->name, 32);
-            }
+	for (i = 0; i < num_glbs; i++)
+	{
+		fi = filedesc[i].items;
+		fc = filedesc[i].itemcount;
 
-            if (strcmp(fi->name, "") == 0)
-            {
-                sprintf(noname, "_%03x", j);
-                strcat(label, noname);
-                strcpy(fi->name, label);
-                strcpy(label, labelsave);
-                labelflag = 1;
-            }
-            else
-                labelflag = 0;
+		for (j = 0; j < fc; j++, fi++)
+		{
+			if (fi->length == 0)
+			{
+				strncpy(label, fi->name, 32);
+				strncpy(labelsave, fi->name, 32);
+			}
 
-            if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
-            {
-                foundflag = 1;
-                buffer = GLB_GetItem(j);
+			if (strcmp(fi->name, "") == 0)
+			{
+				sprintf(noname, "_%03x", j);
+				strcat(label, noname);
+				strcpy(fi->name, label);
+				strcpy(label, labelsave);
+				labelflag = 1;
+			}
+			else
+				labelflag = 0;
 
-                outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
+			agxmode = 0;
 
-                if (!outbuffer)
-                    goto nextitem;
+			if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
+			{
+				foundflag = 1;
+				buffer = GLB_GetItem(j);
 
-                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
-                    fs::create_directory(getdirectory);
+				outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
 
-                RemoveCharFromString(fi->name, '/');
+				if (!outbuffer)
+				{
+					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
-                strncpy(outdirectory, getdirectory, 260);
-                sprintf(getpath, "/%s", fi->name);
-                strcat(outdirectory, getpath);
+					if (outbuffer)
+						agxmode = 1;
+				}
 
-                sprintf(outdirectory, "%s.png", outdirectory);
+				if (!outbuffer)
+				{
+					printf("%s is not a PIC, BLK, TILE or AGX item\n", fi->name);
+					goto nextitem;
+				}
 
-                if (!access(outdirectory, 0))
-                {
-                    int lstring;
-                    lstring = strlen(outdirectory);
-                    outdirectory[lstring - 4] = '\0';
+				if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+					fs::create_directory(getdirectory);
 
-                    sprintf(dup, "_%03x", j);
-                    strcat(outdirectory, dup);
-                    sprintf(outdirectory, "%s.png", outdirectory);
-                }
+				RemoveCharFromString(fi->name, '/');
 
-                picture = (GFX_PIC*)buffer;
-                
-                if (outbuffer)
-                {
-                    WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
-                    free(outbuffer);
-                }
+				strncpy(outdirectory, getdirectory, 260);
+				sprintf(getpath, "/%s", fi->name);
+				strcat(outdirectory, getpath);
 
-                if (searchflag && fi->name[0] != '\0')
-                {
-                    printf("Decoding item: %s\n", fi->name);
-                    
-                    if(picture->type == GPIC)
-                        printf("Itemtype: GPIC\n");
-                    
-                    if (picture->type == GSPRITE)
-                        printf("Itemtype: GSPRITE\n");
+				sprintf(outdirectory, "%s.png", outdirectory);
 
-                    printf("Width of item: %0d\n", picture->width);
-                    printf("Height of item: %0d\n", picture->height);
-                    printf("Encoding item to: %s\n", outdirectory);
-                    
-                    if (buffer)
-                        free(buffer);
-                    
-                    itemtotal++;
-                }
-            }
+				if (!access(outdirectory, 0))
+				{
+					int lstring;
+					lstring = strlen(outdirectory);
+					outdirectory[lstring - 4] = '\0';
 
-            if (!searchflag)
-            {
-                buffer = GLB_GetItem(j);
+					sprintf(dup, "_%03x", j);
+					strcat(outdirectory, dup);
+					sprintf(outdirectory, "%s.png", outdirectory);
+				}
 
-                outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
+				picture = (GFX_PIC*)buffer;
 
-                if (!outbuffer)
-                    goto nextitem;
+				if (outbuffer)
+				{
+					if (!agxmode)
+						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
+					else
+						WriteGraphics(outbuffer, outdirectory, 320, 200);
 
-                if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
-                    fs::create_directory(getdirectory);
+					free(outbuffer);
+				}
 
-                RemoveCharFromString(fi->name, '/');
+				if (searchflag && fi->name[0] != '\0')
+				{
+					printf("Decoding item: %s\n", fi->name);
 
-                strncpy(outdirectory, getdirectory, 260);
-                sprintf(getpath, "/%s", fi->name);
-                strcat(outdirectory, getpath);
+					if (!agxmode)
+					{
+						if (picture->type == GPIC)
+							printf("Itemtype: GPIC\n");
 
-                sprintf(outdirectory, "%s.png", outdirectory);
+						if (picture->type == GSPRITE)
+							printf("Itemtype: GSPRITE\n");
 
-                if (!access(outdirectory, 0))
-                {
-                    int lstring;
-                    lstring = strlen(outdirectory);
-                    outdirectory[lstring - 4] = '\0';
+						printf("Width of item: %0d\n", picture->width);
+						printf("Height of item: %0d\n", picture->height);
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+					else
+					{
+						printf("Itemtype: AGX\n");
+						printf("Width of item: %0d\n", 320);
+						printf("Height of item: %0d\n", 200);
+						printf("Encoding item to: %s\n", outdirectory);
+					}
 
-                    sprintf(dup, "_%03x", j);
-                    strcat(outdirectory, dup);
-                    sprintf(outdirectory, "%s.png", outdirectory);
-                }
+					if (buffer)
+						free(buffer);
 
-                picture = (GFX_PIC*)buffer;
-                
-                if (outbuffer)
-                {
-                    WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
-                    free(outbuffer);
-                }
+					itemtotal++;
+				}
+			}
 
-                if (fi->name[0] != '\0')
-                {
-                    printf("Decoding item: %s\n", fi->name);
-                    
-                    if (picture->type == GPIC)
-                        printf("Itemtype: GPIC\n");
+			if (!searchflag)
+			{
+				buffer = GLB_GetItem(j);
 
-                    if (picture->type == GSPRITE)
-                        printf("Itemtype: GSPRITE\n");
+				outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
 
-                    printf("Width of item: %0d\n", picture->width);
-                    printf("Height of item: %0d\n", picture->height);
-                    printf("Encoding item to: %s\n", outdirectory);
+				if (!outbuffer)
+				{
+					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
-                    if (buffer)
-                        free(buffer);
-                }
-            }
-        
-            if (fi->name[0] != '\0' && !searchflag)
-                itemtotal++;
-        
-        nextitem:;
-        }
-    }
-    
-    if (searchflag && !foundflag)
-        printf("Item not found\n");
+					if (outbuffer)
+						agxmode = 1;
+				}
+
+				if (!outbuffer)
+					goto nextitem;
+
+				if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
+					fs::create_directory(getdirectory);
+
+				RemoveCharFromString(fi->name, '/');
+
+				strncpy(outdirectory, getdirectory, 260);
+				sprintf(getpath, "/%s", fi->name);
+				strcat(outdirectory, getpath);
+
+				sprintf(outdirectory, "%s.png", outdirectory);
+
+				if (!access(outdirectory, 0))
+				{
+					int lstring;
+					lstring = strlen(outdirectory);
+					outdirectory[lstring - 4] = '\0';
+
+					sprintf(dup, "_%03x", j);
+					strcat(outdirectory, dup);
+					sprintf(outdirectory, "%s.png", outdirectory);
+				}
+
+				picture = (GFX_PIC*)buffer;
+
+				if (outbuffer)
+				{
+					if (!agxmode)
+						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
+					else
+						WriteGraphics(outbuffer, outdirectory, 320, 200);
+
+					free(outbuffer);
+				}
+
+				if (fi->name[0] != '\0')
+				{
+					printf("Decoding item: %s\n", fi->name);
+
+					if (!agxmode)
+					{
+
+						if (picture->type == GPIC)
+							printf("Itemtype: GPIC\n");
+
+						if (picture->type == GSPRITE)
+							printf("Itemtype: GSPRITE\n");
+
+						printf("Width of item: %0d\n", picture->width);
+						printf("Height of item: %0d\n", picture->height);
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+					else
+					{
+						printf("Itemtype: AGX\n");
+						printf("Width of item: %0d\n", 320);
+						printf("Height of item: %0d\n", 200);
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+
+					if (buffer)
+						free(buffer);
+				}
+			}
+
+			if (fi->name[0] != '\0' && !searchflag)
+				itemtotal++;
+
+		nextitem:;
+		}
+	}
+
+	if (searchflag && !foundflag)
+		printf("Item not found\n");
 }
