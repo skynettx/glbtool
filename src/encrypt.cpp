@@ -43,10 +43,10 @@
 #endif // _MSC_VER
 
 struct State {
-     char current_byte;
-     char prev_byte;
-     uint8_t key_pos;
- };
+	char current_byte;
+	char prev_byte;
+	uint8_t key_pos;
+};
 
 struct fitem_t hfat;
 struct fitem_t temp;
@@ -55,275 +55,275 @@ struct State state;
 
 int calculate_key_pos(int len)
 {
-    return 25 % len;
+	return 25 % len;
 }
 
 void reset_state(struct State* state)
 {
-    state->key_pos = calculate_key_pos(strlen(serial));
-    state->prev_byte = serial[state->key_pos];
+	state->key_pos = calculate_key_pos(strlen(serial));
+	state->prev_byte = serial[state->key_pos];
 
-    return;
+	return;
 }
 
 static int encrypt_varlen(struct State* state, void* data, int size)
 {
-    char* current_byte;
-    char* prev_byte;
-    char* byte_data;
-    uint8_t* key_pos;
+	char* current_byte;
+	char* prev_byte;
+	char* byte_data;
+	uint8_t* key_pos;
 
-    int i;
+	int i;
 
-    current_byte = &state->current_byte;
-    prev_byte = &state->prev_byte;
-    key_pos = &state->key_pos;
-    byte_data = (char*)data;
+	current_byte = &state->current_byte;
+	prev_byte = &state->prev_byte;
+	key_pos = &state->key_pos;
+	byte_data = (char*)data;
 
-    for (i = 0; i < size; i++)
-    {
-        *current_byte = byte_data[i];
-        byte_data[i] = *current_byte + serial[*key_pos] + *prev_byte;
-        byte_data[i] &= 0xFF;
-        (*key_pos)++;
-        *key_pos %= strlen(serial);
-        *prev_byte = byte_data[i];
-    }
+	for (i = 0; i < size; i++)
+	{
+		*current_byte = byte_data[i];
+		byte_data[i] = *current_byte + serial[*key_pos] + *prev_byte;
+		byte_data[i] &= 0xFF;
+		(*key_pos)++;
+		*key_pos %= strlen(serial);
+		*prev_byte = byte_data[i];
+	}
 
-    return i;
+	return i;
 }
 
 int encrypt_int(struct State* state, int* data)
 {
-    return encrypt_varlen(state, data, 4);
+	return encrypt_varlen(state, data, 4);
 }
 
 int encrypt_filename(struct State* state, char* str)
 {
-    *(str + 16 - 1) = '\0';
-    return encrypt_varlen(state, str, 16);
+	*(str + 16 - 1) = '\0';
+	return encrypt_varlen(state, str, 16);
 }
 
 int encrypt_fat_single(struct State* state, struct fitem_t* fat)
 {
-    int retval;
+	int retval;
 
-    reset_state(state);
+	reset_state(state);
 
-    retval = encrypt_int(state, &fat->flags);
-    retval += encrypt_int(state, &fat->offset);
-    retval += encrypt_int(state, &fat->length);
-    retval += encrypt_filename(state, fat->name);
+	retval = encrypt_int(state, &fat->flags);
+	retval += encrypt_int(state, &fat->offset);
+	retval += encrypt_int(state, &fat->length);
+	retval += encrypt_filename(state, fat->name);
 
-    return retval;
+	return retval;
 }
 
 int encrypt_file(struct State* state, char* str, int length)
 {
-    if (!length) return 0;
-    reset_state(state);
-    return encrypt_varlen(state, str, length);
+	if (!length) return 0;
+	reset_state(state);
+	return encrypt_varlen(state, str, length);
 }
 
 int fat_io_write(struct fitem_t* fat, int fd)
 {
-    char buffer[28];
+	char buffer[28];
 
-    int pos;
+	int pos;
 
-    pos = 0;
+	pos = 0;
 
-    memcpy(buffer, &fat->flags, 4);
-    pos += 4;
-    memcpy(buffer + pos, &fat->offset, 4);
-    pos += 4;
-    memcpy(buffer + pos, &fat->length, 4);
-    pos += 4;
-    memcpy(buffer + pos, fat->name, 16);
-    pos += 16;
+	memcpy(buffer, &fat->flags, 4);
+	pos += 4;
+	memcpy(buffer + pos, &fat->offset, 4);
+	pos += 4;
+	memcpy(buffer + pos, &fat->length, 4);
+	pos += 4;
+	memcpy(buffer + pos, fat->name, 16);
+	pos += 16;
 
-    return write(fd, buffer, 28);
+	return write(fd, buffer, 28);
 }
 
 int fat_entry_init(struct fitem_t* fat, char* path, char* itemname, int offset)
 {
-    struct stat st;
+	struct stat st;
 
-    int len;
+	int len;
 
-    if (stat(path, &st))
-    {
-        return -1;
-    }
+	if (stat(path, &st))
+	{
+		return -1;
+	}
 
-    fat->flags = 0;
-    fat->offset = offset;
-    fat->length = st.st_size;
+	fat->flags = 0;
+	fat->offset = offset;
+	fat->length = st.st_size;
 
-    len = strlen(path);
+	len = strlen(path);
 
-    if (len > 16)
-        path += len - 16 + 1;
+	if (len > 16)
+		path += len - 16 + 1;
 
-    if (encryptlinkflag)
-        strcpy(fat->name, itemname);
-    else
-        strcpy(fat->name, path);
+	if (encryptlinkflag)
+		strcpy(fat->name, itemname);
+	else
+		strcpy(fat->name, path);
 
-    strncpy(fat->name, RemovePathFromString(fat->name), 16);
+	strncpy(fat->name, RemovePathFromString(fat->name), 16);
 
-    return 0;
+	return 0;
 }
 
 void fat_flag_encryption(struct fitem_t* ffat, int nfiles)
 {
-    struct fitem_t* end;
+	struct fitem_t* end;
 
-    end = ffat + nfiles;
+	end = ffat + nfiles;
 
-    for (; ffat < end; ffat++)
-    {
-        ffat->flags = 1;
-    }
+	for (; ffat < end; ffat++)
+	{
+		ffat->flags = 1;
+	}
 
-    return;
+	return;
 }
 
 void GLB_Create(char* outfilename)
 {
-    char* buffer;
-    int largest;
-    int offset;
-    int bytes;
-    int nfiles;
-    int i;
-    int filecnt = 0;
-    int rd, wd;
+	char* buffer;
+	int largest;
+	int offset;
+	int bytes;
+	int nfiles;
+	int i;
+	int filecnt = 0;
+	int rd, wd;
 
-    largest = 0;
+	largest = 0;
 
-    memset(&hfat, 0, sizeof(hfat));
+	memset(&hfat, 0, sizeof(hfat));
 
-    if (encryptflag)
-    {
-        filecnt = 2;
-        nfiles = allinfilenamescnt - 3;
-    }
-    else
-    {
-        filecnt = 0;
-        nfiles = allinfilenamescnt;
-    }
+	if (encryptflag)
+	{
+		filecnt = 2;
+		nfiles = allinfilenamescnt - 3;
+	}
+	else
+	{
+		filecnt = 0;
+		nfiles = allinfilenamescnt;
+	}
 
-    outfile = fopen(outfilename, "wb");
+	outfile = fopen(outfilename, "wb");
 
-    wd = fileno(outfile);
-    hfat.offset = nfiles;
-    encrypt_fat_single(&state, &hfat);
-    fat_io_write(&hfat, wd);
+	wd = fileno(outfile);
+	hfat.offset = nfiles;
+	encrypt_fat_single(&state, &hfat);
+	fat_io_write(&hfat, wd);
 
-    ffat = (struct fitem_t*)malloc(sizeof(*ffat) * nfiles);
-    offset = nfiles * 28 + 28;
+	ffat = (struct fitem_t*)malloc(sizeof(*ffat) * nfiles);
+	offset = nfiles * 28 + 28;
 
-    for (i = 0; i < nfiles; i++)
-    {
-        if (encryptlinkflag)
-        {
-            if (fat_entry_init(&ffat[i], allinfilenames[filecnt], alloutfilenames[filecnt], offset))
-            {
-                printf("Could not init fat entry %s\n", allinfilenames[filecnt]);
-                EXIT_Error("Could not init fat entry");
-            }
-        }
-        else
-        {
-            if (fat_entry_init(&ffat[i], allinfilenames[filecnt], 0, offset))
-            {
-                printf("Could not init fat entry %s\n", allinfilenames[filecnt]);
-                EXIT_Error("Could not init fat entry");
-            }
-        }
-        
-        if (ffat[i].length > largest) 
-            largest = ffat[i].length;
-        
-        offset += ffat[i].length;
+	for (i = 0; i < nfiles; i++)
+	{
+		if (encryptlinkflag)
+		{
+			if (fat_entry_init(&ffat[i], allinfilenames[filecnt], alloutfilenames[filecnt], offset))
+			{
+				printf("Could not init fat entry %s\n", allinfilenames[filecnt]);
+				EXIT_Error("Could not init fat entry");
+			}
+		}
+		else
+		{
+			if (fat_entry_init(&ffat[i], allinfilenames[filecnt], 0, offset))
+			{
+				printf("Could not init fat entry %s\n", allinfilenames[filecnt]);
+				EXIT_Error("Could not init fat entry");
+			}
+		}
 
-        filecnt++;
-    }
+		if (ffat[i].length > largest)
+			largest = ffat[i].length;
 
-    fat_flag_encryption(ffat, nfiles);
+		offset += ffat[i].length;
 
-    for (i = 0; i < nfiles; i++)
-    {
-        memcpy(&temp, &ffat[i], sizeof(ffat[i]));
-        encrypt_fat_single(&state, &temp);
+		filecnt++;
+	}
 
-        bytes = fat_io_write(&temp, wd);
+	fat_flag_encryption(ffat, nfiles);
 
-        if (bytes == -1)
-        {
-            EXIT_Error("DIE");
-        }
-        else if (bytes != 28) 
-        {
-            printf("Bytes written not equal to file length %s\n", ffat[i].name);
-        }
-    }
+	for (i = 0; i < nfiles; i++)
+	{
+		memcpy(&temp, &ffat[i], sizeof(ffat[i]));
+		encrypt_fat_single(&state, &temp);
 
-    buffer = (char*)malloc(largest);
+		bytes = fat_io_write(&temp, wd);
 
-    if (encryptflag)
-        filecnt = 2;
+		if (bytes == -1)
+		{
+			EXIT_Error("DIE");
+		}
+		else if (bytes != 28)
+		{
+			printf("Bytes written not equal to file length %s\n", ffat[i].name);
+		}
+	}
 
-    else
-        filecnt = 0;
+	buffer = (char*)malloc(largest);
 
-    for (i = 0; i < nfiles; i++)
-    {
-        infile = fopen(allinfilenames[filecnt], "rb");
+	if (encryptflag)
+		filecnt = 2;
 
-        if (!infile)
-        {
-            printf("Could not open file %s\n", allinfilenames[filecnt]);
-            EXIT_Error("Could not open file");
-        }
+	else
+		filecnt = 0;
 
-        printf("Encrypting item: %s\n", allinfilenames[filecnt]);
-        itemtotal++;
-        itemtotalsize += ffat[i].length;
+	for (i = 0; i < nfiles; i++)
+	{
+		infile = fopen(allinfilenames[filecnt], "rb");
 
-        rd = fileno(infile);
+		if (!infile)
+		{
+			printf("Could not open file %s\n", allinfilenames[filecnt]);
+			EXIT_Error("Could not open file");
+		}
 
-        bytes = read(rd, buffer, ffat[i].length);
+		printf("Encrypting item: %s\n", allinfilenames[filecnt]);
+		itemtotal++;
+		itemtotalsize += ffat[i].length;
 
-        if (bytes == -1)
-        {
-            EXIT_Error("DIE");
-        }
-        else if (bytes != ffat[i].length) 
-        {
-            printf("Bytes read not equal to file length %s\n", allinfilenames[filecnt]);
-        }
+		rd = fileno(infile);
 
-        encrypt_file(&state, buffer, ffat[i].length);
+		bytes = read(rd, buffer, ffat[i].length);
 
-        bytes = write(wd, buffer, ffat[i].length);
+		if (bytes == -1)
+		{
+			EXIT_Error("DIE");
+		}
+		else if (bytes != ffat[i].length)
+		{
+			printf("Bytes read not equal to file length %s\n", allinfilenames[filecnt]);
+		}
 
-        if (bytes == -1)
-        {
-            EXIT_Error("DIE");
-        }
-        else if (bytes != ffat[i].length)
-        {
-            printf("Bytes written not equal to file length %s\n", allinfilenames[filecnt]);
-        }
+		encrypt_file(&state, buffer, ffat[i].length);
 
-        fclose(infile);
-        filecnt++;
-    }
+		bytes = write(wd, buffer, ffat[i].length);
 
-    free(ffat);
-    free(buffer);
-    fclose(outfile);
+		if (bytes == -1)
+		{
+			EXIT_Error("DIE");
+		}
+		else if (bytes != ffat[i].length)
+		{
+			printf("Bytes written not equal to file length %s\n", allinfilenames[filecnt]);
+		}
+
+		fclose(infile);
+		filecnt++;
+	}
+
+	free(ffat);
+	free(buffer);
+	fclose(outfile);
 }
