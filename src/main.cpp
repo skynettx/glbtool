@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 			"    optional <SearchItemNameNumber> only list found items\n"
 			"-w  Write header file from <INPUTFILE.GLB> and add <FILENUMBER>\n"
 			"    for correct item numbers\n"
-			"-g  Convert PIC, BLK and TILE items from <INPUTFILE.GLB> and <PALETTEFILE>\n"
+			"-g  Convert PIC, BLK, TILE and AGX items from <INPUTFILE.GLB> and <PALETTEFILE>\n"
 			"    to PNG format\n"
 			"    optional <SearchItemNameNumber> only convert found items\n"
 			"-h  Show this help\n");
