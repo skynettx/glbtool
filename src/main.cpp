@@ -47,6 +47,7 @@ int encryptlinkflag = 0;
 int searchflag = 0;
 int searchnumber = -1;
 int convgraphicflag = 0;
+int convgraphicmapflag = 0;
 
 FILE* infile;
 FILE* outfile;
@@ -117,6 +118,7 @@ int main(int argc, char** argv)
 	const char* listall = "-la";
 	const char* writeheader = "-w";
 	const char* convgraphics = "-g";
+	const char* convgraphicsmap = "-gm";
 	char line;
 
 	printf("********************************************************************************\n"
@@ -148,6 +150,8 @@ int main(int argc, char** argv)
 			"-g  Convert PIC, BLK, TILE and AGX items from <INPUTFILE.GLB> and <PALETTEFILE>\n"
 			"    to PNG format\n"
 			"    optional <SearchItemNameNumber> only convert found items\n"
+			"-gm Convert MAP items from <INPUTFILE.GLB>... and <PALETTEFILE>\n"
+			"    to PNG format\n"
 			"-h  Show this help\n");
 
 		return 0;
@@ -315,8 +319,8 @@ int main(int argc, char** argv)
 
 			rewind(linkfile);
 
-			allinfilenames = (char**)malloc((4096) * sizeof * allinfilenames);
-			alloutfilenames = (char**)malloc((4096) * sizeof * alloutfilenames);
+			allinfilenames = (char**)malloc((allinfilenamescnt) * sizeof * allinfilenames);
+			alloutfilenames = (char**)malloc((allinfilenamescnt) * sizeof * alloutfilenames);
 
 			for (int i = 0; i < allinfilenamescnt; i++)
 			{
@@ -413,8 +417,13 @@ int main(int argc, char** argv)
 		}
 	}
 
+	if (strcmp(argv[1], convgraphicsmap) == 0)
+	{
+		convgraphicmapflag = 1;
+	}
+
 	if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag
-		&& !convgraphicflag)
+		&& !convgraphicflag && !convgraphicmapflag)
 	{
 		printf("Command not found\n"
 			"Usage: -h for help\n");
@@ -461,6 +470,56 @@ int main(int argc, char** argv)
 		GLB_InitSystem();
 	}
 
+	if (convgraphicmapflag)
+	{
+		allinfilenames = (char**)malloc((argc + 1) * sizeof * allinfilenames);
+		allinfilenamescnt = argc;
+
+		if (argv[2] && argc > 3)
+		{
+
+			for (int i = 0; i < argc; ++i)
+			{
+				size_t length = strlen(argv[i]) + 1;
+				allinfilenames[i] = (char*)malloc(length);
+				memcpy(allinfilenames[i], argv[i], length);
+
+				if (i > 1 && i < argc)
+				{
+					strncpy(infilename, argv[i], 260);
+
+					if (access(infilename, 0))
+					{
+						printf("Input file not found\n");
+						return 0;
+					}
+				}
+
+				if (i == argc - 1)
+					strncpy(palfilename, argv[i], 260);
+			}
+
+			if (!SetPalette(palfilename))
+				return 0;
+		}
+
+		if (!argv[2])
+		{
+			printf("No input file specified\n");
+			return 0;
+		}
+
+		if (!argv[3])
+		{
+			printf("Palette file not specified\n");
+			return 0;
+		}
+
+		sprintf(getdirectory, "%s", "mapgraph");
+
+		GLB_InitSystem();
+	}
+
 	if (encryptflag || encryptallflag || encryptlinkflag)
 	{
 		GLB_Create(outfilename);
@@ -491,13 +550,13 @@ int main(int argc, char** argv)
 		GLB_FreeAll();
 	}
 
-	if (convgraphicflag)
+	if (convgraphicflag || convgraphicmapflag)
 	{
 		GLB_ConvertGraphics();
 		printf("Total items encoded: %02d\n", itemtotal);
 	}
 
-	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag)
+	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag)
 	{
 		fclose(infile);
 	}

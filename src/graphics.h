@@ -15,5 +15,6 @@ typedef struct
 
 int SetPalette(char* palfilename);
 char* ConvertGraphics(char* item, char* itemname, int itemlength);
+char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength);
 char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength);
 void WriteGraphics(char* outbuffer, char* outdirectory, int picwidth, int picheight);

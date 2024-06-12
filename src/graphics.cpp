@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "main.h"
+#include "decrypt.h"
 #include "lodepng.h"
 #include "graphics.h"
 
@@ -23,7 +24,12 @@
 
 #define HEADERSIZE 20
 #define BLOCKHEADERSIZE 16
+#define MAP_ROWS        150
+#define MAP_COLS        9
+#define MAP_SIZE        ( MAP_ROWS * MAP_COLS )
 
+int tileidflag = 0;
+int tileid[15];
 FILE* palfile;
 
 struct palette_t {
@@ -51,6 +57,20 @@ typedef struct
 	unsigned short offset;
 	unsigned short length;
 }ANIMLINE;
+
+typedef struct
+{
+	short flats;
+	short fgame;
+}MAZEDATA;
+
+typedef struct
+{
+	int sizerec;
+	int spriteoff;
+	int numsprites;
+	MAZEDATA map[MAP_SIZE];
+}MAZELEVEL;
 
 lodepng::State statepng;
 
@@ -438,4 +458,88 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 	}
 
 	return 0;
+}
+
+char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
+{
+	MAZELEVEL* map;
+	char* buffer;
+	char* tilebuffer;
+	char* outbuffer;
+	char starttilelabel[14];
+	int pos = 0;
+	int updatepos = 4 * 32;
+	int rowcount = 0;
+	int tilecount = 0;
+	int startpos = 0;
+
+	if (!itemlength)
+		return 0;
+
+	map = (MAZELEVEL*)item;
+
+	if (map->sizerec != itemlength)
+		return 0;
+
+	outbuffer = (char*)malloc(4 * 288 * 4800);
+
+	if (!tileidflag)
+	{
+		for (int i = 0; i < 15; i++)
+		{
+			sprintf(starttilelabel, "STARTG%dTILES", i);
+			tileid[i] = GLB_GetItemID(starttilelabel);
+
+			if (tileid[i] != -1)
+			{
+				tileidflag = 1;
+				tileid[i] += 1;
+			}
+		}
+	}
+
+	if (!tileidflag)
+		return 0;
+
+	for (int i = 0; i < 1350; i++)
+	{
+		if (tileid[map->map[i].fgame + 1] == -1)
+		{
+			printf("%s needs tileset %d conversion aborted\n", itemname, map->map[i].fgame);
+			return 0;
+		}
+
+		buffer = GLB_GetItem(map->map[i].flats + tileid[map->map[i].fgame + 1]);
+
+		if (!buffer)
+			return 0;
+
+		tilebuffer = ConvertGraphics(buffer, NULL, 1044);
+
+		for (int n = 0; n < 1024 * 4; pos++, n++)
+		{
+			outbuffer[pos] = tilebuffer[n];
+
+			if (n == updatepos - 1)
+			{
+				pos += 4 * 256;
+				updatepos += 4 * 32;
+			}
+		}
+
+		rowcount++;
+		tilecount++;
+
+		updatepos = 4 * 32;
+
+		if (rowcount == 9)
+		{
+			startpos += 31 * 1152;
+			rowcount = 0;
+		}
+
+		pos = tilecount * 4 * 32 + startpos;
+	}
+
+	return outbuffer;
 }

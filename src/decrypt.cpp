@@ -149,8 +149,14 @@ void GLB_InitSystem(void)
 
 	memset(filedesc, 0, sizeof(filedesc));
 
+	if (convgraphicmapflag)
+		num_glbs = allinfilenamescnt - 3;
+
 	for (i = 0; i < num_glbs; i++)
 	{
+		if (convgraphicmapflag)
+			strncpy(filename, allinfilenames[i + 2], 260);
+
 		fd = &filedesc[i];
 		j = GLB_NumItems(i);
 
@@ -240,6 +246,32 @@ char* GLB_FetchItem(int handle, int mode)
 char* GLB_GetItem(int handle)
 {
 	return GLB_FetchItem(handle, 1);
+}
+
+int GLB_GetItemID(const char* in_name)
+{
+	fitem_t* fi;
+	int fc;
+	int i, j;
+
+	if (*in_name != ' ' && *in_name != '\0')
+	{
+		for (i = 0; i < num_glbs; i++)
+		{
+			fi = filedesc[i].items;
+			fc = filedesc[i].itemcount;
+
+			for (j = 0; j < fc; j++, fi++)
+			{
+				if (!strcmp(in_name, fi->name))
+				{
+					return (i << 16) | j;
+				}
+			}
+		}
+	}
+
+	return -1;
 }
 
 void GLB_FreeAll(void)
@@ -526,7 +558,9 @@ void GLB_ConvertGraphics(void)
 	int i, j;
 	int foundflag = 0;
 	int labelflag = 0;
+	int glbidnum = 0;
 	int agxmode;
+	int mapmode;
 	char* buffer;
 	char* outbuffer;
 	char dup[32];
@@ -562,15 +596,27 @@ void GLB_ConvertGraphics(void)
 				labelflag = 0;
 
 			agxmode = 0;
+			mapmode = 0;
 
 			if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
 			{
 				foundflag = 1;
-				buffer = GLB_GetItem(j);
+				buffer = GLB_GetItem(j + glbidnum);
 
-				outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
+				outbuffer = NULL;
 
-				if (!outbuffer)
+				if (!convgraphicmapflag)
+					outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
+
+				if (!outbuffer && convgraphicmapflag)
+				{
+					outbuffer = ConvertGraphicsMAP(buffer, fi->name, fi->length);
+
+					if (outbuffer)
+						mapmode = 1;
+				}
+
+				if (!outbuffer && !convgraphicmapflag)
 				{
 					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
@@ -610,9 +656,11 @@ void GLB_ConvertGraphics(void)
 
 				if (outbuffer)
 				{
-					if (!agxmode)
+					if (!agxmode && !mapmode)
 						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
-					else
+					else if (mapmode)
+						WriteGraphics(outbuffer, outdirectory, 288, 4800);
+					else if (agxmode)
 						WriteGraphics(outbuffer, outdirectory, 320, 200);
 
 					free(outbuffer);
@@ -622,7 +670,7 @@ void GLB_ConvertGraphics(void)
 				{
 					printf("Decoding item: %s\n", fi->name);
 
-					if (!agxmode)
+					if (!agxmode && !mapmode)
 					{
 						if (picture->type == GPIC)
 							printf("Itemtype: GPIC\n");
@@ -634,7 +682,14 @@ void GLB_ConvertGraphics(void)
 						printf("Height of item: %0d\n", picture->height);
 						printf("Encoding item to: %s\n", outdirectory);
 					}
-					else
+					else if (mapmode)
+					{
+						printf("Itemtype: MAP\n");
+						printf("Width of item: %0d\n", 288);
+						printf("Height of item: %0d\n", 4800);
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+					else if (agxmode)
 					{
 						printf("Itemtype: AGX\n");
 						printf("Width of item: %0d\n", 320);
@@ -651,11 +706,22 @@ void GLB_ConvertGraphics(void)
 
 			if (!searchflag)
 			{
-				buffer = GLB_GetItem(j);
+				buffer = GLB_GetItem(j + glbidnum);
 
-				outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
+				outbuffer = NULL;
 
-				if (!outbuffer)
+				if (!convgraphicmapflag)
+					outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
+
+				if (!outbuffer && convgraphicmapflag)
+				{
+					outbuffer = ConvertGraphicsMAP(buffer, fi->name, fi->length);
+
+					if (outbuffer)
+						mapmode = 1;
+				}
+
+				if (!outbuffer && !convgraphicmapflag)
 				{
 					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
@@ -692,9 +758,11 @@ void GLB_ConvertGraphics(void)
 
 				if (outbuffer)
 				{
-					if (!agxmode)
+					if (!agxmode && !mapmode)
 						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
-					else
+					else if (mapmode)
+						WriteGraphics(outbuffer, outdirectory, 288, 4800);
+					else if (agxmode)
 						WriteGraphics(outbuffer, outdirectory, 320, 200);
 
 					free(outbuffer);
@@ -704,7 +772,7 @@ void GLB_ConvertGraphics(void)
 				{
 					printf("Decoding item: %s\n", fi->name);
 
-					if (!agxmode)
+					if (!agxmode && !mapmode)
 					{
 
 						if (picture->type == GPIC)
@@ -717,7 +785,14 @@ void GLB_ConvertGraphics(void)
 						printf("Height of item: %0d\n", picture->height);
 						printf("Encoding item to: %s\n", outdirectory);
 					}
-					else
+					else if (mapmode)
+					{
+						printf("Itemtype: MAP\n");
+						printf("Width of item: %0d\n", 288);
+						printf("Height of item: %0d\n", 4800);
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+					else if (agxmode)
 					{
 						printf("Itemtype: AGX\n");
 						printf("Width of item: %0d\n", 320);
@@ -735,6 +810,8 @@ void GLB_ConvertGraphics(void)
 
 		nextitem:;
 		}
+
+		glbidnum += 0x10000;
 	}
 
 	if (searchflag && !foundflag)
