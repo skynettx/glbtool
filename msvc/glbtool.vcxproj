@@ -136,6 +136,7 @@
     <ClCompile Include="..\src\graphics.cpp" />
     <ClCompile Include="..\src\lodepng.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\sounds.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\decrypt.h" />
@@ -143,6 +144,7 @@
     <ClInclude Include="..\src\graphics.h" />
     <ClInclude Include="..\src\lodepng.h" />
     <ClInclude Include="..\src\main.h" />
+    <ClInclude Include="..\src\sounds.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,0 +1,1 @@
+char* ConvertSounds(char* item, char* itemname, int itemlength);

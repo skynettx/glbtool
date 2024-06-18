@@ -29,25 +29,26 @@ extern int searchflag;
 extern int searchnumber;
 extern int convgraphicflag;
 extern int convgraphicmapflag;
+extern int convsoundflag;
 
 struct meminfo_t
 {
-    char* ptr;
-    uint32_t age;
+	char* ptr;
+	uint32_t age;
 };
 
 struct fitem_t {
-    char name[32];
-    meminfo_t mem;
-    int length;
-    int offset;
-    int flags;
-    int lock;
+	char name[32];
+	meminfo_t mem;
+	int length;
+	int offset;
+	int flags;
+	int lock;
 };
 
 static inline void EXIT_Error(const char* a1, ...)
 {
-    exit(0);
+	exit(0);
 }
 
 void RemoveCharFromString(char* p, char c);

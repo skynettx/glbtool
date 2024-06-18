@@ -48,6 +48,7 @@ int searchflag = 0;
 int searchnumber = -1;
 int convgraphicflag = 0;
 int convgraphicmapflag = 0;
+int convsoundflag = 0;
 
 FILE* infile;
 FILE* outfile;
@@ -119,6 +120,7 @@ int main(int argc, char** argv)
 	const char* writeheader = "-w";
 	const char* convgraphics = "-g";
 	const char* convgraphicsmap = "-gm";
+	const char* convsounds = "-s";
 	char line;
 
 	printf("********************************************************************************\n"
@@ -152,6 +154,7 @@ int main(int argc, char** argv)
 			"    optional <SearchItemNameNumber> only convert found items\n"
 			"-gm Convert MAP items from <INPUTFILE.GLB>... and <PALETTEFILE>\n"
 			"    to PNG format\n"
+			"-s  Convert digital FX items from <INPUTFILE.GLB> to WAVE format\n"
 			"-h  Show this help\n");
 
 		return 0;
@@ -422,8 +425,13 @@ int main(int argc, char** argv)
 		convgraphicmapflag = 1;
 	}
 
+	if (strcmp(argv[1], convsounds) == 0)
+	{
+		convsoundflag = 1;
+	}
+
 	if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag
-		&& !convgraphicflag && !convgraphicmapflag)
+		&& !convgraphicflag && !convgraphicmapflag && !convsoundflag)
 	{
 		printf("Command not found\n"
 			"Usage: -h for help\n");
@@ -431,7 +439,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag)
+	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convsoundflag)
 	{
 		if (argv[2])
 			strncpy(filename, argv[2], 260);
@@ -465,6 +473,13 @@ int main(int argc, char** argv)
 			strncpy(getdirectory, filename, 260);
 			RemoveCharFromString(getdirectory, '.');
 			sprintf(getdirectory, "%s%s", getdirectory, "graph");
+		}
+
+		if (argv[2] && convsoundflag)
+		{
+			strncpy(getdirectory, filename, 260);
+			RemoveCharFromString(getdirectory, '.');
+			sprintf(getdirectory, "%s%s", getdirectory, "sound");
 		}
 
 		GLB_InitSystem();
@@ -550,13 +565,18 @@ int main(int argc, char** argv)
 		GLB_FreeAll();
 	}
 
-	if (convgraphicflag || convgraphicmapflag)
+	if (convgraphicflag || convgraphicmapflag || convsoundflag)
 	{
-		GLB_ConvertGraphics();
+		GLB_ConvertItems();
 		printf("Total items encoded: %02d\n", itemtotal);
+
+		if (convgraphicmapflag)
+		{
+			free(allinfilenames);
+		}
 	}
 
-	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag)
+	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag || convsoundflag)
 	{
 		fclose(infile);
 	}

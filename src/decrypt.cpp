@@ -9,6 +9,7 @@
 #include "main.h"
 #include "decrypt.h"
 #include "graphics.h"
+#include "sounds.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -551,7 +552,7 @@ void GLB_WriteHeaderFile(void)
 	}
 }
 
-void GLB_ConvertGraphics(void)
+void GLB_ConvertItems(void)
 {
 	fitem_t* fi;
 	int fc;
@@ -561,6 +562,7 @@ void GLB_ConvertGraphics(void)
 	int glbidnum = 0;
 	int agxmode;
 	int mapmode;
+	int soundmode;
 	char* buffer;
 	char* outbuffer;
 	char dup[32];
@@ -597,6 +599,7 @@ void GLB_ConvertGraphics(void)
 
 			agxmode = 0;
 			mapmode = 0;
+			soundmode = 0;
 
 			if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
 			{
@@ -605,7 +608,7 @@ void GLB_ConvertGraphics(void)
 
 				outbuffer = NULL;
 
-				if (!convgraphicmapflag)
+				if (!convgraphicmapflag && !convsoundflag)
 					outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
 
 				if (!outbuffer && convgraphicmapflag)
@@ -616,7 +619,15 @@ void GLB_ConvertGraphics(void)
 						mapmode = 1;
 				}
 
-				if (!outbuffer && !convgraphicmapflag)
+				if (!outbuffer && convsoundflag)
+				{
+					outbuffer = ConvertSounds(buffer, fi->name, fi->length);
+
+					if (outbuffer)
+						soundmode = 1;
+				}
+
+				if (!outbuffer && !convgraphicmapflag && !convsoundflag)
 				{
 					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
@@ -639,7 +650,10 @@ void GLB_ConvertGraphics(void)
 				sprintf(getpath, "/%s", fi->name);
 				strcat(outdirectory, getpath);
 
-				sprintf(outdirectory, "%s.png", outdirectory);
+				if (convsoundflag)
+					sprintf(outdirectory, "%s.wav", outdirectory);
+				else
+					sprintf(outdirectory, "%s.png", outdirectory);
 
 				if (!access(outdirectory, 0))
 				{
@@ -649,17 +663,31 @@ void GLB_ConvertGraphics(void)
 
 					sprintf(dup, "_%03x", j);
 					strcat(outdirectory, dup);
-					sprintf(outdirectory, "%s.png", outdirectory);
+
+					if (convsoundflag)
+						sprintf(outdirectory, "%s.wav", outdirectory);
+					else
+						sprintf(outdirectory, "%s.png", outdirectory);
 				}
 
 				picture = (GFX_PIC*)buffer;
 
 				if (outbuffer)
 				{
-					if (!agxmode && !mapmode)
+					if (!agxmode && !mapmode && !soundmode)
 						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
 					else if (mapmode)
 						WriteGraphics(outbuffer, outdirectory, 288, 4800);
+					else if (soundmode)
+					{
+						outfile = fopen(outdirectory, "wb");
+
+						if (outfile)
+						{
+							fwrite(outbuffer, fi->length + 36, 1, outfile);
+							fclose(outfile);
+						}
+					}
 					else if (agxmode)
 						WriteGraphics(outbuffer, outdirectory, 320, 200);
 
@@ -670,7 +698,7 @@ void GLB_ConvertGraphics(void)
 				{
 					printf("Decoding item: %s\n", fi->name);
 
-					if (!agxmode && !mapmode)
+					if (!agxmode && !mapmode && !soundmode)
 					{
 						if (picture->type == GPIC)
 							printf("Itemtype: GPIC\n");
@@ -687,6 +715,11 @@ void GLB_ConvertGraphics(void)
 						printf("Itemtype: MAP\n");
 						printf("Width of item: %0d\n", 288);
 						printf("Height of item: %0d\n", 4800);
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+					else if (soundmode)
+					{
+						printf("Itemtype: FX\n");
 						printf("Encoding item to: %s\n", outdirectory);
 					}
 					else if (agxmode)
@@ -710,7 +743,7 @@ void GLB_ConvertGraphics(void)
 
 				outbuffer = NULL;
 
-				if (!convgraphicmapflag)
+				if (!convgraphicmapflag && !convsoundflag)
 					outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
 
 				if (!outbuffer && convgraphicmapflag)
@@ -721,7 +754,15 @@ void GLB_ConvertGraphics(void)
 						mapmode = 1;
 				}
 
-				if (!outbuffer && !convgraphicmapflag)
+				if (!outbuffer && convsoundflag)
+				{
+					outbuffer = ConvertSounds(buffer, fi->name, fi->length);
+
+					if (outbuffer)
+						soundmode = 1;
+				}
+
+				if (!outbuffer && !convgraphicmapflag && !convsoundflag)
 				{
 					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
@@ -741,7 +782,10 @@ void GLB_ConvertGraphics(void)
 				sprintf(getpath, "/%s", fi->name);
 				strcat(outdirectory, getpath);
 
-				sprintf(outdirectory, "%s.png", outdirectory);
+				if (convsoundflag)
+					sprintf(outdirectory, "%s.wav", outdirectory);
+				else
+					sprintf(outdirectory, "%s.png", outdirectory);
 
 				if (!access(outdirectory, 0))
 				{
@@ -751,17 +795,31 @@ void GLB_ConvertGraphics(void)
 
 					sprintf(dup, "_%03x", j);
 					strcat(outdirectory, dup);
-					sprintf(outdirectory, "%s.png", outdirectory);
+
+					if (convsoundflag)
+						sprintf(outdirectory, "%s.wav", outdirectory);
+					else
+						sprintf(outdirectory, "%s.png", outdirectory);
 				}
 
 				picture = (GFX_PIC*)buffer;
 
 				if (outbuffer)
 				{
-					if (!agxmode && !mapmode)
+					if (!agxmode && !mapmode && !soundmode)
 						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
 					else if (mapmode)
 						WriteGraphics(outbuffer, outdirectory, 288, 4800);
+					else if (soundmode)
+					{
+						outfile = fopen(outdirectory, "wb");
+
+						if (outfile)
+						{
+							fwrite(outbuffer, fi->length + 36, 1, outfile);
+							fclose(outfile);
+						}
+					}
 					else if (agxmode)
 						WriteGraphics(outbuffer, outdirectory, 320, 200);
 
@@ -772,7 +830,7 @@ void GLB_ConvertGraphics(void)
 				{
 					printf("Decoding item: %s\n", fi->name);
 
-					if (!agxmode && !mapmode)
+					if (!agxmode && !mapmode && !soundmode)
 					{
 
 						if (picture->type == GPIC)
@@ -790,6 +848,11 @@ void GLB_ConvertGraphics(void)
 						printf("Itemtype: MAP\n");
 						printf("Width of item: %0d\n", 288);
 						printf("Height of item: %0d\n", 4800);
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+					else if (soundmode)
+					{
+						printf("Itemtype: FX\n");
 						printf("Encoding item to: %s\n", outdirectory);
 					}
 					else if (agxmode)
