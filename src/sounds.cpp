@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "main.h"
-#include "decrypt.h"
 #include "sounds.h"
 
 #ifdef _WIN32

@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 	char line;
 
 	printf("********************************************************************************\n"
-		" GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.2\n"
+		" GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.3\n"
 		"********************************************************************************\n");
 
 	if (!argv[1])
