@@ -10,6 +10,7 @@
 #include "decrypt.h"
 #include "graphics.h"
 #include "sounds.h"
+#include "mus2mid.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -563,6 +564,8 @@ void GLB_ConvertItems(void)
 	int agxmode;
 	int mapmode;
 	int soundmode;
+	int musicmode;
+	int midoutlen;
 	char* buffer;
 	char* outbuffer;
 	char dup[32];
@@ -600,6 +603,7 @@ void GLB_ConvertItems(void)
 			agxmode = 0;
 			mapmode = 0;
 			soundmode = 0;
+			musicmode = 0;
 
 			if (strcmp(fi->name, searchname) == 0 || j == searchnumber)
 			{
@@ -608,7 +612,7 @@ void GLB_ConvertItems(void)
 
 				outbuffer = NULL;
 
-				if (!convgraphicmapflag && !convsoundflag)
+				if (!convgraphicmapflag && !convsoundflag && !convmusicflag)
 					outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
 
 				if (!outbuffer && convgraphicmapflag)
@@ -627,7 +631,15 @@ void GLB_ConvertItems(void)
 						soundmode = 1;
 				}
 
-				if (!outbuffer && !convgraphicmapflag && !convsoundflag)
+				if (!outbuffer && convmusicflag)
+				{
+					outbuffer = ConvertMusic(buffer, fi->name, fi->length);
+
+					if (outbuffer)
+						musicmode = 1;
+				}
+
+				if (!outbuffer && !convgraphicmapflag && !convsoundflag && !convmusicflag)
 				{
 					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
@@ -637,7 +649,10 @@ void GLB_ConvertItems(void)
 
 				if (!outbuffer)
 				{
-					printf("%s is not a PIC, BLK, TILE or AGX item\n", fi->name);
+					if (convmusicflag)
+						printf("%s is not a MUS item\n", fi->name);
+					else
+						printf("%s is not a PIC, BLK, TILE or AGX item\n", fi->name);
 					goto nextitem;
 				}
 
@@ -652,6 +667,8 @@ void GLB_ConvertItems(void)
 
 				if (convsoundflag)
 					sprintf(outdirectory, "%s.wav", outdirectory);
+				else if (convmusicflag)
+					sprintf(outdirectory, "%s.mid", outdirectory);
 				else
 					sprintf(outdirectory, "%s.png", outdirectory);
 
@@ -666,6 +683,8 @@ void GLB_ConvertItems(void)
 
 					if (convsoundflag)
 						sprintf(outdirectory, "%s.wav", outdirectory);
+					else if (convmusicflag)
+						sprintf(outdirectory, "%s.mid", outdirectory);
 					else
 						sprintf(outdirectory, "%s.png", outdirectory);
 				}
@@ -674,7 +693,7 @@ void GLB_ConvertItems(void)
 
 				if (outbuffer)
 				{
-					if (!agxmode && !mapmode && !soundmode)
+					if (!agxmode && !mapmode && !soundmode && !musicmode)
 						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
 					else if (mapmode)
 						WriteGraphics(outbuffer, outdirectory, 288, 4800);
@@ -688,6 +707,17 @@ void GLB_ConvertItems(void)
 							fclose(outfile);
 						}
 					}
+					else if (musicmode)
+					{
+						outfile = fopen(outdirectory, "wb");
+
+						if (outfile)
+						{
+							midoutlen = mus_getoutfilelen();
+							fwrite(outbuffer, midoutlen, 1, outfile);
+							fclose(outfile);
+						}
+					}
 					else if (agxmode)
 						WriteGraphics(outbuffer, outdirectory, 320, 200);
 
@@ -698,7 +728,7 @@ void GLB_ConvertItems(void)
 				{
 					printf("Decoding item: %s\n", fi->name);
 
-					if (!agxmode && !mapmode && !soundmode)
+					if (!agxmode && !mapmode && !soundmode && !musicmode)
 					{
 						if (picture->type == GPIC)
 							printf("Itemtype: GPIC\n");
@@ -720,6 +750,11 @@ void GLB_ConvertItems(void)
 					else if (soundmode)
 					{
 						printf("Itemtype: FX\n");
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+					else if (musicmode)
+					{
+						printf("Itemtype: MUS\n");
 						printf("Encoding item to: %s\n", outdirectory);
 					}
 					else if (agxmode)
@@ -743,7 +778,7 @@ void GLB_ConvertItems(void)
 
 				outbuffer = NULL;
 
-				if (!convgraphicmapflag && !convsoundflag)
+				if (!convgraphicmapflag && !convsoundflag && !convmusicflag)
 					outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
 
 				if (!outbuffer && convgraphicmapflag)
@@ -762,7 +797,15 @@ void GLB_ConvertItems(void)
 						soundmode = 1;
 				}
 
-				if (!outbuffer && !convgraphicmapflag && !convsoundflag)
+				if (!outbuffer && convmusicflag)
+				{
+					outbuffer = ConvertMusic(buffer, fi->name, fi->length);
+
+					if (outbuffer)
+						musicmode = 1;
+				}
+
+				if (!outbuffer && !convgraphicmapflag && !convsoundflag && !convmusicflag)
 				{
 					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
@@ -784,6 +827,8 @@ void GLB_ConvertItems(void)
 
 				if (convsoundflag)
 					sprintf(outdirectory, "%s.wav", outdirectory);
+				else if (convmusicflag)
+					sprintf(outdirectory, "%s.mid", outdirectory);
 				else
 					sprintf(outdirectory, "%s.png", outdirectory);
 
@@ -798,6 +843,8 @@ void GLB_ConvertItems(void)
 
 					if (convsoundflag)
 						sprintf(outdirectory, "%s.wav", outdirectory);
+					else if (convmusicflag)
+						sprintf(outdirectory, "%s.mid", outdirectory);
 					else
 						sprintf(outdirectory, "%s.png", outdirectory);
 				}
@@ -806,7 +853,7 @@ void GLB_ConvertItems(void)
 
 				if (outbuffer)
 				{
-					if (!agxmode && !mapmode && !soundmode)
+					if (!agxmode && !mapmode && !soundmode && !musicmode)
 						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
 					else if (mapmode)
 						WriteGraphics(outbuffer, outdirectory, 288, 4800);
@@ -820,6 +867,17 @@ void GLB_ConvertItems(void)
 							fclose(outfile);
 						}
 					}
+					else if (musicmode)
+					{
+						outfile = fopen(outdirectory, "wb");
+
+						if (outfile)
+						{
+							midoutlen = mus_getoutfilelen();
+							fwrite(outbuffer, midoutlen, 1, outfile);
+							fclose(outfile);
+						}
+					}
 					else if (agxmode)
 						WriteGraphics(outbuffer, outdirectory, 320, 200);
 
@@ -830,7 +888,7 @@ void GLB_ConvertItems(void)
 				{
 					printf("Decoding item: %s\n", fi->name);
 
-					if (!agxmode && !mapmode && !soundmode)
+					if (!agxmode && !mapmode && !soundmode && !musicmode)
 					{
 
 						if (picture->type == GPIC)
@@ -853,6 +911,11 @@ void GLB_ConvertItems(void)
 					else if (soundmode)
 					{
 						printf("Itemtype: FX\n");
+						printf("Encoding item to: %s\n", outdirectory);
+					}
+					else if (musicmode)
+					{
+						printf("Itemtype: MUS\n");
 						printf("Encoding item to: %s\n", outdirectory);
 					}
 					else if (agxmode)

@@ -49,6 +49,7 @@ int searchnumber = -1;
 int convgraphicflag = 0;
 int convgraphicmapflag = 0;
 int convsoundflag = 0;
+int convmusicflag = 0;
 
 FILE* infile;
 FILE* outfile;
@@ -121,6 +122,7 @@ int main(int argc, char** argv)
 	const char* convgraphics = "-g";
 	const char* convgraphicsmap = "-gm";
 	const char* convsounds = "-s";
+	const char* convmusic = "-m";
 	char line;
 
 	printf("********************************************************************************\n"
@@ -155,6 +157,8 @@ int main(int argc, char** argv)
 			"-gm Convert MAP items from <INPUTFILE.GLB>... and <PALETTEFILE>\n"
 			"    to PNG format\n"
 			"-s  Convert digital FX items from <INPUTFILE.GLB> to WAVE format\n"
+			"-m  Convert MUS items from <INPUTFILE.GLB> to MID format\n"
+			"    optional <SearchItemNameNumber> only convert found items\n"
 			"-h  Show this help\n");
 
 		return 0;
@@ -430,8 +434,23 @@ int main(int argc, char** argv)
 		convsoundflag = 1;
 	}
 
+	if (strcmp(argv[1], convmusic) == 0)
+	{
+		convmusicflag = 1;
+
+		if (argc == 4)
+		{
+			searchflag = 1;
+			searchnumber = atoi(argv[3]);
+			strncpy(searchname, argv[3], 260);
+
+			if (CheckStrDigit(searchname) == 0)
+				searchnumber = -1;
+		}
+	}
+
 	if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag
-		&& !convgraphicflag && !convgraphicmapflag && !convsoundflag)
+		&& !convgraphicflag && !convgraphicmapflag && !convsoundflag && !convmusicflag)
 	{
 		printf("Command not found\n"
 			"Usage: -h for help\n");
@@ -439,7 +458,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convsoundflag)
+	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convsoundflag || convmusicflag)
 	{
 		if (argv[2])
 			strncpy(filename, argv[2], 260);
@@ -480,6 +499,13 @@ int main(int argc, char** argv)
 			strncpy(getdirectory, filename, 260);
 			RemoveCharFromString(getdirectory, '.');
 			sprintf(getdirectory, "%s%s", getdirectory, "sound");
+		}
+
+		if (argv[2] && convmusicflag)
+		{
+			strncpy(getdirectory, filename, 260);
+			RemoveCharFromString(getdirectory, '.');
+			sprintf(getdirectory, "%s%s", getdirectory, "music");
 		}
 
 		GLB_InitSystem();
@@ -565,7 +591,7 @@ int main(int argc, char** argv)
 		GLB_FreeAll();
 	}
 
-	if (convgraphicflag || convgraphicmapflag || convsoundflag)
+	if (convgraphicflag || convgraphicmapflag || convsoundflag || convmusicflag)
 	{
 		GLB_ConvertItems();
 		printf("Total items encoded: %02d\n", itemtotal);
@@ -576,7 +602,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag || convsoundflag)
+	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag || convsoundflag || convmusicflag)
 	{
 		fclose(infile);
 	}

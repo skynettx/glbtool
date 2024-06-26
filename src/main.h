@@ -30,6 +30,7 @@ extern int searchnumber;
 extern int convgraphicflag;
 extern int convgraphicmapflag;
 extern int convsoundflag;
+extern int convmusicflag;
 
 struct meminfo_t
 {

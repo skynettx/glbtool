@@ -16,6 +16,7 @@ src/decrypt.cpp
 src/encrypt.cpp
 src/graphics.cpp
 src/sounds.cpp
+src/mus2mid.cpp
 src/lodepng.cpp
 )
 
