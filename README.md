@@ -1,7 +1,7 @@
 # Glbtool
 Tool to encrypt and decrypt Raptor Call Of The Shadows glb files.  
 
-![Alt text](https://imgur.com/UfdhChU.jpg "Glbtool")
+![Alt text](https://imgur.com/pPjxp1k.jpg "Glbtool")
 ## Build
 When you have installed git on your system you can clone the repository 
 by type in `git clone https://github.com/skynettx/glbtool.git`.
@@ -21,3 +21,4 @@ make
 ## Thanks
 Special thanks to [Yggdrasill](https://github.com/Yggdrasill) for the encryption part from glbtools.
 Also thanks for [LodePNG](https://github.com/lvandeve/lodepng) used in this project.
+Many thanks also to Ben Ryves for mus2mid.
