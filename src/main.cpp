@@ -48,6 +48,9 @@ int searchflag = 0;
 int searchnumber = -1;
 int convgraphicflag = 0;
 int convgraphicmapflag = 0;
+int convgraphicmapspriteflag = 0;
+int diffmode = -1;
+int eemode = 0;
 int convsoundflag = 0;
 int convmusicflag = 0;
 
@@ -121,12 +124,13 @@ int main(int argc, char** argv)
 	const char* writeheader = "-w";
 	const char* convgraphics = "-g";
 	const char* convgraphicsmap = "-gm";
+	const char* convgraphicsmapsprite = "-gs";
 	const char* convsounds = "-s";
 	const char* convmusic = "-m";
 	char line;
 
 	printf("********************************************************************************\n"
-		" GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.3\n"
+		" GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.4\n"
 		"********************************************************************************\n");
 
 	if (!argv[1])
@@ -156,6 +160,8 @@ int main(int argc, char** argv)
 			"    optional <SearchItemNameNumber> only convert found items\n"
 			"-gm Convert MAP items from <INPUTFILE.GLB>... and <PALETTEFILE>\n"
 			"    to PNG format\n"
+			"-gs Convert MAP items with sprites from <INPUTFILE.GLB>... and <PALETTEFILE>\n"
+			"    difficulty <3=Easy4=Medium5=Hard> and easter eggs <0=Off1=On> to PNG format\n"
 			"-s  Convert digital FX items from <INPUTFILE.GLB> to WAVE format\n"
 			"-m  Convert MUS items from <INPUTFILE.GLB> to MID format\n"
 			"    optional <SearchItemNameNumber> only convert found items\n"
@@ -429,6 +435,11 @@ int main(int argc, char** argv)
 		convgraphicmapflag = 1;
 	}
 
+	if (strcmp(argv[1], convgraphicsmapsprite) == 0)
+	{
+		convgraphicmapspriteflag = 1;
+	}
+
 	if (strcmp(argv[1], convsounds) == 0)
 	{
 		convsoundflag = 1;
@@ -450,7 +461,7 @@ int main(int argc, char** argv)
 	}
 
 	if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag
-		&& !convgraphicflag && !convgraphicmapflag && !convsoundflag && !convmusicflag)
+		&& !convgraphicflag && !convgraphicmapflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
 	{
 		printf("Command not found\n"
 			"Usage: -h for help\n");
@@ -511,37 +522,94 @@ int main(int argc, char** argv)
 		GLB_InitSystem();
 	}
 
-	if (convgraphicmapflag)
+	if (convgraphicmapflag || convgraphicmapspriteflag)
 	{
 		allinfilenames = (char**)malloc((argc + 1) * sizeof * allinfilenames);
 		allinfilenamescnt = argc;
 
-		if (argv[2] && argc > 3)
+		if (convgraphicmapflag)
 		{
-
-			for (int i = 0; i < argc; ++i)
+			if (argv[2] && argc > 3)
 			{
-				size_t length = strlen(argv[i]) + 1;
-				allinfilenames[i] = (char*)malloc(length);
-				memcpy(allinfilenames[i], argv[i], length);
 
-				if (i > 1 && i < argc)
+				for (int i = 0; i < argc; ++i)
 				{
-					strncpy(infilename, argv[i], 260);
+					size_t length = strlen(argv[i]) + 1;
+					allinfilenames[i] = (char*)malloc(length);
+					memcpy(allinfilenames[i], argv[i], length);
 
-					if (access(infilename, 0))
+					if (i > 1 && i < argc)
 					{
-						printf("Input file not found\n");
-						return 0;
+						strncpy(infilename, argv[i], 260);
+
+						if (access(infilename, 0))
+						{
+							printf("Input file not found\n");
+							return 0;
+						}
+					}
+
+					if (i == argc - 1)
+						strncpy(palfilename, argv[i], 260);
+				}
+
+				if (!SetPalette(palfilename))
+					return 0;
+			}
+		}
+
+		if (convgraphicmapspriteflag)
+		{
+			if (argv[4] && argc > 5)
+			{
+
+				for (int i = 0; i < argc; ++i)
+				{
+					size_t length = strlen(argv[i]) + 1;
+					allinfilenames[i] = (char*)malloc(length);
+					memcpy(allinfilenames[i], argv[i], length);
+
+					if (i > 1 && i < argc - 2)
+					{
+						strncpy(infilename, argv[i], 260);
+
+						if (access(infilename, 0))
+						{
+							printf("Input file not found\n");
+							return 0;
+						}
+					}
+
+					if (i == argc - 3)
+						strncpy(palfilename, argv[i], 260);
+
+					if (i == argc - 2)
+					{
+						diffmode = atoi(argv[i]);
+
+						if (CheckStrDigit(argv[i]) == 0 || diffmode != 3 && diffmode != 4 && diffmode != 5)
+						{
+							printf("Difficulty or easter egg mode not valid\n");
+							return 0;
+						}
+
+					}
+
+					if (i == argc - 1)
+					{
+						eemode = atoi(argv[i]);
+
+						if (CheckStrDigit(argv[i]) == 0 || eemode != 0 && eemode != 1)
+						{
+							printf("Difficulty or easter egg mode not valid\n");
+							return 0;
+						}
 					}
 				}
 
-				if (i == argc - 1)
-					strncpy(palfilename, argv[i], 260);
+				if (!SetPalette(palfilename))
+					return 0;
 			}
-
-			if (!SetPalette(palfilename))
-				return 0;
 		}
 
 		if (!argv[2])
@@ -556,7 +624,47 @@ int main(int argc, char** argv)
 			return 0;
 		}
 
-		sprintf(getdirectory, "%s", "mapgraph");
+		if (convgraphicmapspriteflag)
+		{
+			if (!argv[4])
+			{
+				printf("Difficulty mode not specified\n");
+				return 0;
+			}
+
+			if (!argv[5])
+			{
+				printf("Easter egg mode not specified\n");
+				return 0;
+			}
+		}
+
+		if (convgraphicmapflag)
+			sprintf(getdirectory, "%s", "mapgraph");
+
+		if (convgraphicmapspriteflag)
+		{
+			if (diffmode == 3)
+				sprintf(getdirectory, "%s", "mapgraphspeasy");
+
+			if (diffmode == 4)
+				sprintf(getdirectory, "%s", "mapgraphspmed");
+
+			if (diffmode == 5)
+				sprintf(getdirectory, "%s", "mapgraphsphard");
+
+			if (diffmode == 3 && eemode)
+				sprintf(getdirectory, "%s", "mapgraphspeasyee");
+
+			if (diffmode == 4 && eemode)
+				sprintf(getdirectory, "%s", "mapgraphspmedee");
+
+			if (diffmode == 5 && eemode)
+				sprintf(getdirectory, "%s", "mapgraphsphardee");
+
+			if (eemode == 0)
+				eemode = -1;
+		}
 
 		GLB_InitSystem();
 	}
@@ -591,18 +699,19 @@ int main(int argc, char** argv)
 		GLB_FreeAll();
 	}
 
-	if (convgraphicflag || convgraphicmapflag || convsoundflag || convmusicflag)
+	if (convgraphicflag || convgraphicmapflag || convgraphicmapspriteflag || convsoundflag || convmusicflag)
 	{
 		GLB_ConvertItems();
 		printf("Total items encoded: %02d\n", itemtotal);
 
-		if (convgraphicmapflag)
+		if (convgraphicmapflag || convgraphicmapspriteflag)
 		{
 			free(allinfilenames);
 		}
 	}
 
-	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag || convsoundflag || convmusicflag)
+	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag || convgraphicmapspriteflag ||
+		convsoundflag || convmusicflag)
 	{
 		fclose(infile);
 	}

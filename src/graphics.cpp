@@ -28,6 +28,9 @@
 #define MAP_COLS        9
 #define MAP_SIZE        ( MAP_ROWS * MAP_COLS )
 
+#define MAX_FLIGHT      30
+#define MAX_GUNS        24
+
 int tileidflag = 0;
 int tileid[15];
 FILE* palfile;
@@ -71,6 +74,55 @@ typedef struct
 	int numsprites;
 	MAZEDATA map[MAP_SIZE];
 }MAZELEVEL;
+
+typedef struct
+{
+	int link;
+	int slib;
+	int x;
+	int y;
+	int game;
+	int level;
+}CSPRITE;
+
+typedef struct
+{
+	char iname[16];                         // ITEM NAME
+	int item;                               // * GLB ITEM #
+	int bonus;                              // BONUS # ( -1 == NONE )
+	int exptype;                            // EXPLOSION TYPE 
+	int shootspace;                         // SLOWDOWN SPEED
+	int ground;                     //NOT USED IS ON GROUND
+	int suck;                               // CAN SUCK WEAPON AFFECT
+	int frame_rate;                         // FRAME RATE
+	int num_frames;                         // NUM FRAMES
+	int countdown;                          // COUNT DOWN TO START ANIM
+	int rewind;                             // FRAMES TO REWIND
+	int animtype;                           // FREE SPACE FOR LATER USE
+	int shadow;                             // USE SHADOW ( TRUE/FALSE )
+	int bossflag;                           // SHOULD THIS BE CONSIDERED A BOSS
+	int hits;                               // HIT POINTS
+	int money;                              // $$ AMOUNT WHEN KILLED
+	int shootstart;                         // SHOOT START OFFSET
+	int shootcnt;                           // HOW MANY TO SHOOT
+	int shootframe;                         // FRAME RATE TO SHOOT
+	int movespeed;                          // MOVEMENT SPEED
+	int numflight;                          // NUMBER OF FLIGHT POSITIONS
+	int repos;                              // REPEAT TO POSITION
+	int flighttype;                         // FLIGHT TYPE
+	int numguns;                            // NUMBER OF GUNS
+	int numengs;                            // NUMBER OF ENGINES
+	int sfx;                        //NOT USED SFX # TO PLAY
+	int song;                               // SONG # TO PLAY
+	short shoot_type[MAX_GUNS];             // ENEMY SHOOT TYPE
+	short engx[MAX_GUNS];                   // X POS ENGINE FLAME
+	short engy[MAX_GUNS];                   // Y POS ENGINE FLAME
+	short englx[MAX_GUNS];                  // WIDTH OF ENGINE FLAME
+	short shootx[MAX_GUNS];                 // X POS SHOOT FROM
+	short shooty[MAX_GUNS];                 // Y POS SHOOT FROM
+	short flightx[MAX_FLIGHT];              // FLIGHT X POS
+	short flighty[MAX_FLIGHT];              // FLIGHT Y POS
+}SPRITE;
 
 lodepng::State statepng;
 
@@ -463,15 +515,44 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 {
 	MAZELEVEL* map;
+	CSPRITE* sprite;
+	SPRITE* spriteitm;
+	GFX_PIC* spritepic;
+	GFX_SPRITE* convsprite;
+	GFX_PIC* convpic;
 	char* buffer;
 	char* tilebuffer;
 	char* outbuffer;
 	char starttilelabel[14];
+	char itmname[14];
+	char* getsprite;
+	char* getspriteitm;
+	char* getspriteitmbuf;
+	char* spritedata;
+	char* spriteairground;
+	char* convspritepic;
+	char* convreadspritepic;
+	char* rawvga;
+	int spritepos = 0;
+	int itembufsize;
+	int spritebufsize;
 	int pos = 0;
-	int updatepos = 4 * 32;
+	int updatepos = 32;
 	int rowcount = 0;
 	int tilecount = 0;
 	int startpos = 0;
+	int n = 0;
+	int sitmnumber;
+	int rowmax;
+	int rowx;
+	int rowmaxflag = 0;
+	int groundflag;
+	int block_end;
+	int possprite;
+	int pospal = 0;
+	int getitemid;
+	int saveitmid;
+	int checkmode[6];
 
 	if (!itemlength)
 		return 0;
@@ -501,6 +582,8 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 	if (!tileidflag)
 		return 0;
 
+	tilebuffer = (char*)malloc(1024);
+
 	for (int i = 0; i < 1350; i++)
 	{
 		if (tileid[map->map[i].fgame + 1] == -1)
@@ -514,32 +597,270 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 		if (!buffer)
 			return 0;
 
-		tilebuffer = ConvertGraphics(buffer, NULL, 1044);
+		memcpy(tilebuffer, buffer + 20, 1044 - 20);
 
-		for (int n = 0; n < 1024 * 4; pos++, n++)
+		for (int n = 0; n < 1024; pos++, n++)
 		{
 			outbuffer[pos] = tilebuffer[n];
 
 			if (n == updatepos - 1)
 			{
-				pos += 4 * 256;
-				updatepos += 4 * 32;
+				pos += 256;
+				updatepos += 32;
 			}
 		}
 
 		rowcount++;
 		tilecount++;
 
-		updatepos = 4 * 32;
+		updatepos = 32;
 
 		if (rowcount == 9)
 		{
-			startpos += 31 * 1152;
+			startpos += 31 * 288;
 			rowcount = 0;
 		}
 
-		pos = tilecount * 4 * 32 + startpos;
+		pos = tilecount * 32 + startpos;
 	}
+
+	if (convgraphicmapflag)
+		goto skipspritemode;
+
+	getsprite = (char*)malloc(itemlength);
+	memcpy(getsprite, item + map->spriteoff, itemlength - map->spriteoff);
+	sprite = (CSPRITE*)getsprite;
+	spriteairground = (char*)malloc(4800 * 288);
+
+	sprintf(itmname, "SPRITE%d_ITM", sprite->game + 1);
+	saveitmid = sprite->game;
+	getitemid = GLB_GetItemID(itmname);
+
+	if (getitemid == -1)
+	{
+		printf("%s needs %s conversion aborted\n", itemname, itmname);
+		return 0;
+	}
+
+	getspriteitm = GLB_GetItem(getitemid);
+	itembufsize = GLB_ItemSize(getitemid);
+	getspriteitmbuf = (char*)malloc(itembufsize);
+	spriteitm = (SPRITE*)getspriteitm;
+
+	for (int i = 0; i < 4800 * 288; i++)
+	{
+		spriteairground[i] = 0;
+	}
+
+	if (eemode != -1)
+		eemode = -3 + diffmode;
+
+	for (int i = 0; i <= diffmode; i++)
+	{
+		if (i <= diffmode && i > 2)
+			checkmode[i] = 1;
+
+		if (i <= eemode && eemode != -1)
+			checkmode[i] = 1;
+	}
+
+	for (int i = 0; i <= map->numsprites; i++)
+	{
+		if (sprite->game == saveitmid)
+			memcpy(getspriteitmbuf, getspriteitm + sprite->slib * 528, itembufsize - sprite->slib * 528);
+
+		if (checkmode[sprite->level] != 1)
+			goto skipsprite;
+
+		if (sprite->game != saveitmid)
+		{
+			sprintf(itmname, "SPRITE%d_ITM", sprite->game + 1);
+			saveitmid = sprite->game;
+			getitemid = GLB_GetItemID(itmname);
+
+			if (getitemid == -1)
+			{
+				printf("%s needs %s conversion aborted\n", itemname, itmname);
+				return 0;
+			}
+
+			getspriteitm = GLB_GetItem(getitemid);
+			itembufsize = GLB_ItemSize(getitemid);
+			getspriteitmbuf = (char*)malloc(itembufsize);
+			memcpy(getspriteitmbuf, getspriteitm + sprite->slib * 528, itembufsize - sprite->slib * 528);
+		}
+
+		spriteitm = (SPRITE*)getspriteitmbuf;
+
+		sitmnumber = GLB_GetItemID(spriteitm->iname);
+
+		if (sitmnumber == -1)
+		{
+			printf("%s needs %s conversion aborted\n", itemname, spriteitm->iname);
+			return 0;
+		}
+
+		buffer = GLB_GetItem(sitmnumber);
+		spritebufsize = GLB_ItemSize(sitmnumber);
+
+
+		spritepic = (GFX_PIC*)buffer;
+
+		startpos = HEADERSIZE;
+
+		convreadspritepic = (char*)malloc(spritebufsize - 36);
+		memcpy(convreadspritepic, buffer + 36, spritebufsize - 36);
+
+		convspritepic = (char*)malloc(spritebufsize - HEADERSIZE);
+		memcpy(convspritepic, buffer + HEADERSIZE, spritebufsize - HEADERSIZE);
+
+		convsprite = (GFX_SPRITE*)convspritepic;
+		convpic = (GFX_PIC*)buffer;
+
+		block_end = convsprite->length;
+
+		possprite = 0;
+		n = 0;
+
+		spritedata = (char*)malloc(convpic->width * convpic->height);
+
+		for (int i = 0; i < convpic->width * convpic->height; i++)
+		{
+			spritedata[i] = 0;
+		}
+
+		while (1)
+		{
+			if (convsprite->offset == 0xFFFFFFFF && convsprite->length == 0xFFFFFFFF)
+			{
+				break;
+			}
+
+			n = (convsprite->y * convpic->width) + convsprite->x;
+
+			for (int i = 0; i < block_end; i++, possprite++)
+			{
+				spritedata[n] = convreadspritepic[possprite];
+				n++;
+			}
+
+			startpos += block_end + BLOCKHEADERSIZE;
+			possprite += BLOCKHEADERSIZE;
+
+			memcpy(convspritepic, buffer + startpos, spritebufsize - startpos);
+
+			convsprite = (GFX_SPRITE*)convspritepic;
+			block_end = convsprite->length;
+		}
+
+		pos = ((sprite->y * 9 * 32 * 32) + (sprite->x * 32));
+
+		if (spritepic->width == 96 && spritepic->height == 96)
+		{
+			pos -= 9248;
+		}
+		else if (spritepic->width == 96 && spritepic->height == 64)
+		{
+			pos -= 4640;
+		}
+		else if (spritepic->width == 64 && spritepic->height == 64)
+		{
+			pos -= 4624;
+		}
+		else if (spritepic->width == 16 && spritepic->height == 16)
+		{
+			pos += 2312;
+		}
+
+		if (pos < 0 || pos > 4800 * 288)
+			pos = ((sprite->y * 9 * 32 * 32) + (sprite->x * 32));
+
+		rowx = 32 * (9 - sprite->x);
+		rowmax = ((sprite->y * 9 * 32 * 32) + (9 * 32));
+		rowcount = 1;
+
+		if (spritepic->width > rowx)
+			rowmaxflag = 1;
+		else
+			rowmaxflag = 0;
+
+		if (spriteitm->flighttype == 3 || spriteitm->flighttype == 4 || spriteitm->flighttype == 5)
+			groundflag = 1;
+		else
+			groundflag = 0;
+
+		for (int i = 0; i < spritepic->height * spritepic->width; i++, pos++)
+		{
+			if (spritepic->width > rowx && pos == rowmax)
+			{
+				rowmax += 288;
+				pos += (288 - rowx);
+				i += spritepic->width - rowx;
+
+				if (i == spritepic->height * spritepic->width)
+					i--;
+			}
+
+			if (spritedata[i] != 0)
+			{
+
+				outbuffer[pos] = spritedata[i];
+
+				if (groundflag && spriteairground[pos] != 0)
+					outbuffer[pos] = spriteairground[pos];
+
+				spriteairground[pos] = outbuffer[pos];
+			}
+
+			if (rowcount == spritepic->width && !rowmaxflag)
+			{
+				pos += (288 - spritepic->width);
+
+				rowcount = 0;
+			}
+
+			rowcount++;
+		}
+
+		free(convreadspritepic);
+		free(convspritepic);
+	skipsprite:;
+
+
+		memcpy(getsprite, item + map->spriteoff + spritepos, itemlength - map->spriteoff - spritepos);
+		sprite = (CSPRITE*)getsprite;
+
+		spritepos += 24;
+	}
+
+	free(getsprite);
+	free(getspriteitmbuf);
+	free(spriteairground);
+
+skipspritemode:;
+
+	pospal = 0;
+	n = 0;
+
+	rawvga = (char*)malloc(4800 * 288);
+	memcpy(rawvga, outbuffer, 4800 * 288);
+
+	for (int i = 0; i < 288 * 4800; i++, pospal++)
+	{
+		unsigned char pixel = rawvga[pospal];
+
+		outbuffer[n] = palette[pixel].r;
+		n++;
+		outbuffer[n] = palette[pixel].g;
+		n++;
+		outbuffer[n] = palette[pixel].b;
+		n++;
+		outbuffer[n] = palette[pixel].a;
+		n++;
+	}
+
+	free(tilebuffer);
+	free(rawvga);
 
 	return outbuffer;
 }
