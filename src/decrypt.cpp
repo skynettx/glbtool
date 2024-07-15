@@ -151,7 +151,7 @@ void GLB_InitSystem(void)
 
 	memset(filedesc, 0, sizeof(filedesc));
 
-	if (convgraphicmapflag)
+	if (convgraphicmapflag || convgraphicmapdebrisflag)
 		num_glbs = allinfilenamescnt - 3;
 
 	if (convgraphicmapspriteflag)
@@ -159,7 +159,7 @@ void GLB_InitSystem(void)
 
 	for (i = 0; i < num_glbs; i++)
 	{
-		if (convgraphicmapflag || convgraphicmapspriteflag)
+		if (convgraphicmapflag || convgraphicmapdebrisflag || convgraphicmapspriteflag)
 			strncpy(filename, allinfilenames[i + 2], 260);
 
 		fd = &filedesc[i];
@@ -623,10 +623,10 @@ void GLB_ConvertItems(void)
 
 				outbuffer = NULL;
 
-				if (!convgraphicmapflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
+				if (!convgraphicmapflag && !convgraphicmapdebrisflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
 					outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
 
-				if (!outbuffer && convgraphicmapflag || !outbuffer && convgraphicmapspriteflag)
+				if (!outbuffer && convgraphicmapflag || !outbuffer && convgraphicmapdebrisflag || !outbuffer && convgraphicmapspriteflag)
 				{
 					outbuffer = ConvertGraphicsMAP(buffer, fi->name, fi->length);
 
@@ -650,7 +650,7 @@ void GLB_ConvertItems(void)
 						musicmode = 1;
 				}
 
-				if (!outbuffer && !convgraphicmapflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
+				if (!outbuffer && !convgraphicmapflag && !convgraphicmapdebrisflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
 				{
 					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 
@@ -789,10 +789,10 @@ void GLB_ConvertItems(void)
 
 				outbuffer = NULL;
 
-				if (!convgraphicmapflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
+				if (!convgraphicmapflag && !convgraphicmapdebrisflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
 					outbuffer = ConvertGraphics(buffer, fi->name, fi->length);
 
-				if (!outbuffer && convgraphicmapflag || !outbuffer && convgraphicmapspriteflag)
+				if (!outbuffer && convgraphicmapflag || !outbuffer && convgraphicmapdebrisflag || !outbuffer && convgraphicmapspriteflag)
 				{
 					outbuffer = ConvertGraphicsMAP(buffer, fi->name, fi->length);
 
@@ -816,7 +816,7 @@ void GLB_ConvertItems(void)
 						musicmode = 1;
 				}
 
-				if (!outbuffer && !convgraphicmapflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
+				if (!outbuffer && !convgraphicmapflag && !convgraphicmapdebrisflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
 				{
 					outbuffer = ConvertGraphicsAGX(buffer, fi->name, fi->length);
 

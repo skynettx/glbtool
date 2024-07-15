@@ -29,6 +29,7 @@ extern int searchflag;
 extern int searchnumber;
 extern int convgraphicflag;
 extern int convgraphicmapflag;
+extern int convgraphicmapdebrisflag;
 extern int convgraphicmapspriteflag;
 extern int convsoundflag;
 extern int convmusicflag;

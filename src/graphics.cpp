@@ -33,6 +33,8 @@
 
 int tileidflag = 0;
 int tileid[15];
+int flatidflag = 0;
+int flatid[15];
 FILE* palfile;
 
 struct palette_t {
@@ -84,6 +86,13 @@ typedef struct
 	int game;
 	int level;
 }CSPRITE;
+
+typedef struct
+{
+	int linkflat;
+	short bonus;
+	short bounty;
+}FLATS;
 
 typedef struct
 {
@@ -520,11 +529,15 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 	GFX_PIC* spritepic;
 	GFX_SPRITE* convsprite;
 	GFX_PIC* convpic;
+	FLATS* flat = NULL;
 	char* buffer;
 	char* tilebuffer;
 	char* outbuffer;
 	char starttilelabel[14];
 	char itmname[14];
+	char flatlabel[14];
+	char* flatbuffer = NULL;
+	char* getflat = NULL;
 	char* getsprite;
 	char* getspriteitm;
 	char* getspriteitmbuf;
@@ -553,6 +566,8 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 	int getitemid;
 	int saveitmid;
 	int checkmode[6];
+	int flatsize;
+	int saveflat = 0;
 
 	if (!itemlength)
 		return 0;
@@ -584,6 +599,23 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 
 	tilebuffer = (char*)malloc(1024);
 
+	if (convgraphicmapdebrisflag)
+	{
+		if (!flatidflag)
+		{
+			for (int i = 0; i < 15; i++)
+			{
+				sprintf(flatlabel, "FLATSG%d_ITM", i);
+				flatid[i] = GLB_GetItemID(flatlabel);
+
+				if (flatid[i] != -1)
+				{
+					flatidflag = i;
+				}
+			}
+		}
+	}
+
 	for (int i = 0; i < 1350; i++)
 	{
 		if (tileid[map->map[i].fgame + 1] == -1)
@@ -592,7 +624,40 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 			return 0;
 		}
 
-		buffer = GLB_GetItem(map->map[i].flats + tileid[map->map[i].fgame + 1]);
+		if (convgraphicmapdebrisflag)
+		{
+			if (flatid[map->map[i].fgame + 1] == -1)
+			{
+				printf("%s needs FLATSG%d_ITM conversion aborted\n", itemname, map->map[i].fgame);
+				return 0;
+			}
+
+			if (saveflat != map->map[i].fgame + 1)
+			{
+				flatbuffer = GLB_GetItem(flatid[map->map[i].fgame + 1]);
+
+				if (!flatbuffer)
+				{
+					printf("Couldnt not load FLATSG%d_ITM conversion aborted\n", flatid[map->map[i].fgame + 1]);
+					return 0;
+				}
+
+				flatsize = GLB_ItemSize(flatid[map->map[i].fgame + 1]);
+				getflat = (char*)malloc(flatsize);
+
+				saveflat = map->map[i].fgame + 1;
+			}
+
+			memcpy(getflat, flatbuffer + map->map[i].flats * 8, flatsize - map->map[i].flats * 8);
+			flat = (FLATS*)getflat;
+
+			if (map->map[i].flats == flat->linkflat)
+				buffer = GLB_GetItem(map->map[i].flats + tileid[map->map[i].fgame + 1]);
+			else
+				buffer = GLB_GetItem(flat->linkflat + tileid[map->map[i].fgame + 1]);
+		}
+		else
+			buffer = GLB_GetItem(map->map[i].flats + tileid[map->map[i].fgame + 1]);
 
 		if (!buffer)
 			return 0;
@@ -624,7 +689,7 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 		pos = tilecount * 32 + startpos;
 	}
 
-	if (convgraphicmapflag)
+	if (convgraphicmapflag || convgraphicmapdebrisflag)
 		goto skipspritemode;
 
 	getsprite = (char*)malloc(itemlength);
@@ -702,7 +767,6 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 
 		buffer = GLB_GetItem(sitmnumber);
 		spritebufsize = GLB_ItemSize(sitmnumber);
-
 
 		spritepic = (GFX_PIC*)buffer;
 
@@ -824,8 +888,8 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 
 		free(convreadspritepic);
 		free(convspritepic);
-	skipsprite:;
 
+	skipsprite:;
 
 		memcpy(getsprite, item + map->spriteoff + spritepos, itemlength - map->spriteoff - spritepos);
 		sprite = (CSPRITE*)getsprite;
@@ -861,6 +925,11 @@ skipspritemode:;
 
 	free(tilebuffer);
 	free(rawvga);
+
+	if (convgraphicmapdebrisflag)
+	{
+		free(getflat);
+	}
 
 	return outbuffer;
 }

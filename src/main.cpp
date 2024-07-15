@@ -48,6 +48,7 @@ int searchflag = 0;
 int searchnumber = -1;
 int convgraphicflag = 0;
 int convgraphicmapflag = 0;
+int convgraphicmapdebrisflag = 0;
 int convgraphicmapspriteflag = 0;
 int diffmode = -1;
 int eemode = 0;
@@ -124,6 +125,7 @@ int main(int argc, char** argv)
 	const char* writeheader = "-w";
 	const char* convgraphics = "-g";
 	const char* convgraphicsmap = "-gm";
+	const char* convgraphicsmapdebris = "-gd";
 	const char* convgraphicsmapsprite = "-gs";
 	const char* convsounds = "-s";
 	const char* convmusic = "-m";
@@ -159,6 +161,8 @@ int main(int argc, char** argv)
 			"    to PNG format\n"
 			"    optional <SearchItemNameNumber> only convert found items\n"
 			"-gm Convert MAP items from <INPUTFILE.GLB>... and <PALETTEFILE>\n"
+			"    to PNG format\n"
+			"-gd Convert MAP items in debris mode from <INPUTFILE.GLB>... and <PALETTEFILE>\n"
 			"    to PNG format\n"
 			"-gs Convert MAP items with sprites from <INPUTFILE.GLB>... and <PALETTEFILE>\n"
 			"    difficulty <3=Easy4=Medium5=Hard> and easter eggs <0=Off1=On> to PNG format\n"
@@ -435,6 +439,11 @@ int main(int argc, char** argv)
 		convgraphicmapflag = 1;
 	}
 
+	if (strcmp(argv[1], convgraphicsmapdebris) == 0)
+	{
+		convgraphicmapdebrisflag = 1;
+	}
+
 	if (strcmp(argv[1], convgraphicsmapsprite) == 0)
 	{
 		convgraphicmapspriteflag = 1;
@@ -461,7 +470,8 @@ int main(int argc, char** argv)
 	}
 
 	if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag
-		&& !convgraphicflag && !convgraphicmapflag && !convgraphicmapspriteflag && !convsoundflag && !convmusicflag)
+		&& !convgraphicflag && !convgraphicmapflag && !convgraphicmapdebrisflag && !convgraphicmapspriteflag && !convsoundflag
+		&& !convmusicflag)
 	{
 		printf("Command not found\n"
 			"Usage: -h for help\n");
@@ -522,12 +532,12 @@ int main(int argc, char** argv)
 		GLB_InitSystem();
 	}
 
-	if (convgraphicmapflag || convgraphicmapspriteflag)
+	if (convgraphicmapflag || convgraphicmapdebrisflag || convgraphicmapspriteflag)
 	{
 		allinfilenames = (char**)malloc((argc + 1) * sizeof * allinfilenames);
 		allinfilenamescnt = argc;
 
-		if (convgraphicmapflag)
+		if (convgraphicmapflag || convgraphicmapdebrisflag)
 		{
 			if (argv[2] && argc > 3)
 			{
@@ -642,6 +652,9 @@ int main(int argc, char** argv)
 		if (convgraphicmapflag)
 			sprintf(getdirectory, "%s", "mapgraph");
 
+		if (convgraphicmapdebrisflag)
+			sprintf(getdirectory, "%s", "mapgraphdebris");
+
 		if (convgraphicmapspriteflag)
 		{
 			if (diffmode == 3)
@@ -699,19 +712,19 @@ int main(int argc, char** argv)
 		GLB_FreeAll();
 	}
 
-	if (convgraphicflag || convgraphicmapflag || convgraphicmapspriteflag || convsoundflag || convmusicflag)
+	if (convgraphicflag || convgraphicmapflag || convgraphicmapdebrisflag || convgraphicmapspriteflag || convsoundflag || convmusicflag)
 	{
 		GLB_ConvertItems();
 		printf("Total items encoded: %02d\n", itemtotal);
 
-		if (convgraphicmapflag || convgraphicmapspriteflag)
+		if (convgraphicmapflag || convgraphicmapdebrisflag || convgraphicmapspriteflag)
 		{
 			free(allinfilenames);
 		}
 	}
 
-	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag || convgraphicmapspriteflag ||
-		convsoundflag || convmusicflag)
+	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag || convgraphicmapdebrisflag ||
+		convgraphicmapspriteflag || convsoundflag || convmusicflag)
 	{
 		fclose(infile);
 	}
