@@ -184,8 +184,6 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 	char* rawvga;
 	char* outbuf;
 
-	rawvga = (char*)malloc(itemlength - HEADERSIZE);
-
 	if (item)
 	{
 		picture = (GFX_PIC*)item;
@@ -202,8 +200,6 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 			return 0;
 		}
 
-		memcpy(rawvga, item + HEADERSIZE, itemlength - HEADERSIZE);
-
 		int pos = 0;
 		int n = 0;
 
@@ -212,6 +208,9 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 		if (picture->type == GPIC)
 		{
 			int transcnt = 0;
+
+			rawvga = (char*)malloc(itemlength - HEADERSIZE);
+			memcpy(rawvga, item + HEADERSIZE, itemlength - HEADERSIZE);
 
 			for (int i = 0; i < picture->width * picture->height; i++, transcnt++)
 			{
@@ -237,6 +236,8 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				outbuf[n] = palette[pixel].a;
 				n++;
 			}
+
+			free(rawvga);
 		}
 
 		if (picture->type == GSPRITE)
@@ -279,7 +280,6 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				for (int i = 0; i < block_end; i++, pos++)
 				{
 					unsigned char pixel = readspritepic[pos];
-					int pixel_ix = sprite->y * picture->width + sprite->x + i;
 
 					outbuf[n] = palette[pixel].r;
 					n++;
@@ -299,6 +299,9 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				sprite = (GFX_SPRITE*)spritepic;
 				block_end = sprite->length;
 			}
+
+			free(spritepic);
+			free(readspritepic);
 		}
 
 		return outbuf;
@@ -328,10 +331,16 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 		verify = (ANIMLINE*)getitem;
 
 		if (verify->opt != 1 || verify->length == 0 || verify->offset == 0)
+		{
+			free(getitem);
 			return 0;
+		}
 
 		if (verify->length > itemlength)
+		{
+			free(getitem);
 			return 0;
+		}
 
 		memcpy(getitem, item + 9 + verify->length, itemlength - verify->length + 9);
 		verify = (ANIMLINE*)getitem;
@@ -339,21 +348,35 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 		if (verify->opt == 1)
 		{
 			if (verify->length == 0 || verify->offset == 0 || verify->length > itemlength)
+			{
+				free(getitem);
 				return 0;
+			}
 
+			free(getitem);
 			return 1;
 		}
 		else if (verify->opt == 0)
 		{
 			if (verify->length > 0 || verify->offset > 0 || verify->length > itemlength)
+			{
+				free(getitem);
 				return 0;
+			}
 
+			free(getitem);
 			return 1;
 		}
 		else if (verify->opt > 1 || verify->opt < 0)
+		{
+			free(getitem);
 			return 0;
+		}
 		else
+		{
+			free(getitem);
 			return 1;
+		}
 	}
 	else if (mode == 1 && itemlength > 8)
 	{
@@ -362,10 +385,16 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 		verify = (ANIMLINE*)getitem;
 
 		if (verify->opt != 1 || verify->length == 0 || verify->offset == 0)
+		{
+			free(getitem);
 			return 0;
+		}
 
 		if (verify->length > itemlength)
+		{
+			free(getitem);
 			return 0;
+		}
 
 		memcpy(getitem, item + 8 + verify->length, itemlength - verify->length + 8);
 		verify = (ANIMLINE*)getitem;
@@ -373,21 +402,35 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 		if (verify->opt == 1)
 		{
 			if (verify->length == 0 || verify->offset == 0 || verify->length > itemlength)
+			{
+				free(getitem);
 				return 0;
+			}
 
+			free(getitem);
 			return 1;
 		}
 		else if (verify->opt == 0)
 		{
 			if (verify->length > 0 || verify->offset > 0 || verify->length > itemlength)
+			{
+				free(getitem);
 				return 0;
+			}
 
+			free(getitem);
 			return 1;
 		}
 		else if (verify->opt > 1 || verify->opt < 0)
+		{
+			free(getitem);
 			return 0;
+		}
 		else
+		{
+			free(getitem);
 			return 1;
+		}
 	}
 	else
 		return 0;
@@ -514,6 +557,11 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 		}
 
 	drawemptyframe:;
+
+		free(startagx);
+		free(bufferpic);
+		free(rawvga);
+		free(readagxpos);
 
 		return outbuf;
 	}
