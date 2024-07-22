@@ -458,6 +458,7 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 
 	if (!VerifyAGX(item, readstart, itemlength))
 	{
+		free(startagx);
 		return 0;
 	}
 
@@ -625,8 +626,6 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 	if (map->sizerec != itemlength)
 		return 0;
 
-	outbuffer = (char*)malloc(4 * 288 * 4800);
-
 	if (!tileidflag)
 	{
 		for (int i = 0; i < 15; i++)
@@ -645,8 +644,6 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 	if (!tileidflag)
 		return 0;
 
-	tilebuffer = (char*)malloc(1024);
-
 	if (convgraphicmapdebrisflag)
 	{
 		if (!flatidflag)
@@ -664,11 +661,16 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 		}
 	}
 
+	outbuffer = (char*)malloc(4 * 288 * 4800);
+	tilebuffer = (char*)malloc(1024);
+
 	for (int i = 0; i < 1350; i++)
 	{
 		if (tileid[map->map[i].fgame + 1] == -1)
 		{
 			printf("%s needs tileset %d conversion aborted\n", itemname, map->map[i].fgame);
+			free(outbuffer);
+			free(tilebuffer);
 			return 0;
 		}
 
@@ -677,6 +679,8 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 			if (flatid[map->map[i].fgame + 1] == -1)
 			{
 				printf("%s needs FLATSG%d_ITM conversion aborted\n", itemname, map->map[i].fgame);
+				free(outbuffer);
+				free(tilebuffer);
 				return 0;
 			}
 
@@ -687,6 +691,8 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 				if (!flatbuffer)
 				{
 					printf("Couldnt not load FLATSG%d_ITM conversion aborted\n", flatid[map->map[i].fgame + 1]);
+					free(outbuffer);
+					free(tilebuffer);
 					return 0;
 				}
 
@@ -708,7 +714,15 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 			buffer = GLB_GetItem(map->map[i].flats + tileid[map->map[i].fgame + 1]);
 
 		if (!buffer)
+		{
+			free(outbuffer);
+			free(tilebuffer);
+
+			if (convgraphicmapdebrisflag)
+				free(getflat);
+
 			return 0;
+		}
 
 		memcpy(tilebuffer, buffer + 20, 1044 - 20);
 
@@ -752,6 +766,10 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 	if (getitemid == -1)
 	{
 		printf("%s needs %s conversion aborted\n", itemname, itmname);
+		free(outbuffer);
+		free(tilebuffer);
+		free(getsprite);
+		free(spriteairground);
 		return 0;
 	}
 
@@ -794,6 +812,11 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 			if (getitemid == -1)
 			{
 				printf("%s needs %s conversion aborted\n", itemname, itmname);
+				free(outbuffer);
+				free(tilebuffer);
+				free(getsprite);
+				free(spriteairground);
+				free(getspriteitmbuf);
 				return 0;
 			}
 
@@ -810,6 +833,11 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 		if (sitmnumber == -1)
 		{
 			printf("%s needs %s conversion aborted\n", itemname, spriteitm->iname);
+			free(outbuffer);
+			free(tilebuffer);
+			free(getsprite);
+			free(spriteairground);
+			free(getspriteitmbuf);
 			return 0;
 		}
 
