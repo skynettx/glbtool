@@ -907,6 +907,10 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 		{
 			pos -= 4624;
 		}
+		else if (spritepic->width == 24 && spritepic->height == 24)
+		{
+			pos += 1156;
+		}
 		else if (spritepic->width == 16 && spritepic->height == 16)
 		{
 			pos += 2312;
