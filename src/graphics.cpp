@@ -783,6 +783,11 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 		spriteairground[i] = 0;
 	}
 
+	for (int i = 0; i < 6; i++)
+	{
+		checkmode[i] = 0;
+	}
+
 	if (eemode != -1)
 		eemode = -3 + diffmode;
 
