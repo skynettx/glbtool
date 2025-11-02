@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "main.h"
 #include "mus2mid.h"
 
 #define NUM_CHANNELS 16
@@ -437,7 +438,7 @@ bool mus2mid(char* musinput, char* midioutput, int infile_len)
 
 	// Seek to where the data is held
 
-	int lenadd = musfileheader->scorestart;
+	int lenadd = LE_USHORT(musfileheader->scorestart);
 
 	// So, we can assume the MUS file is faintly legit. Let's start
 	// writing MIDI data...
