@@ -129,7 +129,6 @@ int main(int argc, char** argv)
 	const char* convgraphicsmapsprite = "-gs";
 	const char* convsounds = "-s";
 	const char* convmusic = "-m";
-	//char line;
 	int line;
 
 	printf("********************************************************************************\n"
