@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include "main.h"
 #include "sounds.h"
 
 #ifdef _WIN32
@@ -70,8 +71,8 @@ char* ConvertSounds(char* item, char* itemname, int itemlength)
 
 	dspheader = (dsp_t*)item;
 
-	if (dspheader->format != 3 || dspheader->freq != 11025 ||
-		dspheader->length != itemlength - 8)
+	if (LE_SHORT(dspheader->format) != 3 || LE_SHORT(dspheader->freq) != 11025 ||
+		LE_LONG(dspheader->length) != itemlength - 8)
 		return 0;
 
 	waveheader = (waveheader_t*)malloc(sizeof(waveheader_t));
