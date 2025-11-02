@@ -1,6 +1,13 @@
 #pragma once
 #include <stdlib.h>
 
+#include "endianness.h"
+
+#define LE_USHORT(x) end_htole16(x)
+#define LE_SHORT(x) (signed short) end_htole16(x)
+#define LE_ULONG(x) end_htole32(x)
+#define LE_LONG(x) (signed int) end_htole32(x)
+
 extern FILE* infile;
 extern FILE* outfile;
 
