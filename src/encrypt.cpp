@@ -110,6 +110,10 @@ int encrypt_fat_single(struct State* state, struct fitem_t* fat)
 
 	reset_state(state);
 
+	fat->flags = LE_LONG(fat->flags);
+	fat->offset = LE_LONG(fat->offset);
+	fat->length = LE_LONG(fat->length);
+
 	retval = encrypt_int(state, &fat->flags);
 	retval += encrypt_int(state, &fat->offset);
 	retval += encrypt_int(state, &fat->length);
