@@ -57,6 +57,16 @@ static void SetWAVEHeader(waveheader_t* waveheader, int itemlength)
 	waveheader->BlockAlign = waveheader->NumChannels * waveheader->BitsPerSample / 8;
 	strcpy((char*)waveheader->Subchunk2ID, "data");
 	waveheader->Subchunk2Size = itemlength - 8;
+
+	waveheader->ChunkSize = LE_ULONG(waveheader->ChunkSize);
+	waveheader->Subchunk1Size = LE_ULONG(waveheader->Subchunk1Size);
+	waveheader->AudioFormat = LE_USHORT(waveheader->AudioFormat);
+	waveheader->NumChannels = LE_USHORT(waveheader->NumChannels);
+	waveheader->SampleRate = LE_ULONG(waveheader->SampleRate);
+	waveheader->BitsPerSample = LE_USHORT(waveheader->BitsPerSample);
+	waveheader->ByteRate = LE_ULONG(waveheader->ByteRate);
+	waveheader->BlockAlign = LE_USHORT(waveheader->BlockAlign);
+	waveheader->Subchunk2Size = LE_ULONG(waveheader->Subchunk2Size);
 }
 
 char* ConvertSounds(char* item, char* itemname, int itemlength)
