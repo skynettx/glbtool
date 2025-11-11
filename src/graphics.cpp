@@ -99,7 +99,7 @@ typedef struct
 	char iname[16];                         // ITEM NAME
 	int item;                               // * GLB ITEM #
 	int bonus;                              // BONUS # ( -1 == NONE )
-	int exptype;                            // EXPLOSION TYPE 
+	int exptype;                            // EXPLOSION TYPE
 	int shootspace;                         // SLOWDOWN SPEED
 	int ground;                     //NOT USED IS ON GROUND
 	int suck;                               // CAN SUCK WEAPON AFFECT
@@ -189,13 +189,13 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 		picture = (GFX_PIC*)item;
 
 		int verify;
-		verify = picture->width * picture->height + HEADERSIZE;
+		verify = LE_LONG(picture->width) * LE_LONG(picture->height) + HEADERSIZE;
 
-		if (picture->type == GPIC && itemlength != verify ||
-			picture->width > 320 || picture->height > 200 ||
-			!picture->width || !picture->height ||
-			picture->type < 0 || picture->type > 1 ||
-			picture->opt1 < 0 || picture->opt2 < 0)
+		if (LE_LONG((int)picture->type) == GPIC && itemlength != verify ||
+			LE_LONG(picture->width) > 320 || LE_LONG(picture->height) > 200 ||
+			!LE_LONG(picture->width) || !LE_LONG(picture->height) ||
+			LE_LONG((int)picture->type) < 0 || LE_LONG((int)picture->type) > 1 ||
+			LE_LONG(picture->opt1) < 0 || LE_LONG(picture->opt2) < 0)
 		{
 			return 0;
 		}
@@ -203,16 +203,16 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 		int pos = 0;
 		int n = 0;
 
-		outbuf = (char*)malloc(4 * (picture->width * picture->height));
+		outbuf = (char*)malloc(4 * (LE_LONG(picture->width) * LE_LONG(picture->height)));
 
-		if (picture->type == GPIC)
+		if (LE_LONG((int)picture->type) == GPIC)
 		{
 			int transcnt = 0;
 
 			rawvga = (char*)malloc(itemlength - HEADERSIZE);
 			memcpy(rawvga, item + HEADERSIZE, itemlength - HEADERSIZE);
 
-			for (int i = 0; i < picture->width * picture->height; i++, transcnt++)
+			for (int i = 0; i < LE_LONG(picture->width) * LE_LONG(picture->height); i++, transcnt++)
 			{
 				outbuf[transcnt] = 0;
 				transcnt++;
@@ -223,7 +223,7 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				outbuf[transcnt] = 0;
 			}
 
-			for (int i = 0; i < picture->width * picture->height; i++, pos++)
+			for (int i = 0; i < LE_LONG(picture->width) * LE_LONG(picture->height); i++, pos++)
 			{
 				unsigned char pixel = rawvga[pos];
 
@@ -240,7 +240,7 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 			free(rawvga);
 		}
 
-		if (picture->type == GSPRITE)
+		if (LE_LONG((int)picture->type) == GSPRITE)
 		{
 			char* spritepic;
 			char* readspritepic;
@@ -253,11 +253,11 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 			memcpy(spritepic, item + HEADERSIZE, itemlength - HEADERSIZE);
 
 			sprite = (GFX_SPRITE*)spritepic;
-			int block_end = sprite->length;
+			int block_end = LE_LONG(sprite->length);
 
 			int transcnt = 0;
 
-			for (int i = 0; i < picture->width * picture->height; i++, transcnt++)
+			for (int i = 0; i < LE_LONG(picture->width) * LE_LONG(picture->height); i++, transcnt++)
 			{
 				outbuf[transcnt] = 0;
 				transcnt++;
@@ -270,12 +270,12 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 
 			while (1)
 			{
-				if (sprite->offset == 0xFFFFFFFF && sprite->length == 0xFFFFFFFF)
+				if (LE_LONG(sprite->offset) == 0xFFFFFFFF && LE_LONG(sprite->length) == 0xFFFFFFFF)
 				{
 					break;
 				}
 
-				n = (sprite->y * picture->width * 4) + sprite->x * 4;
+				n = (LE_LONG(sprite->y) * LE_LONG(picture->width) * 4) + LE_LONG(sprite->x) * 4;
 
 				for (int i = 0; i < block_end; i++, pos++)
 				{
@@ -297,7 +297,7 @@ char* ConvertGraphics(char* item, char* itemname, int itemlength)
 				memcpy(spritepic, item + startpos, itemlength - startpos);
 
 				sprite = (GFX_SPRITE*)spritepic;
-				block_end = sprite->length;
+				block_end = LE_LONG(sprite->length);
 			}
 
 			free(spritepic);
@@ -319,7 +319,7 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 
 	if (itemlength == 8)
 	{
-		if (verify->opt == 0 && verify->fill == 0 && verify->length == 0 && verify->offset == 0)
+		if (LE_USHORT(verify->opt) == 0 && LE_USHORT(verify->fill) == 0 && LE_USHORT(verify->length) == 0 && LE_USHORT(verify->offset) == 0)
 			return 1;
 		else
 			return 0;
@@ -330,24 +330,24 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 		memcpy(getitem, item + 1, itemlength - 1);
 		verify = (ANIMLINE*)getitem;
 
-		if (verify->opt != 1 || verify->length == 0 || verify->offset == 0)
+		if (LE_USHORT(verify->opt) != 1 || LE_USHORT(verify->length) == 0 || LE_USHORT(verify->offset) == 0)
 		{
 			free(getitem);
 			return 0;
 		}
 
-		if (verify->length > itemlength)
+		if (LE_USHORT(verify->length) > itemlength)
 		{
 			free(getitem);
 			return 0;
 		}
 
-		memcpy(getitem, item + 9 + verify->length, itemlength - verify->length + 9);
+		memcpy(getitem, item + 9 + LE_USHORT(verify->length), itemlength - LE_USHORT(verify->length) + 9);
 		verify = (ANIMLINE*)getitem;
 
 		if (verify->opt == 1)
 		{
-			if (verify->length == 0 || verify->offset == 0 || verify->length > itemlength)
+			if (LE_USHORT(verify->length) == 0 || LE_USHORT(verify->offset) == 0 || LE_USHORT(verify->length) > itemlength)
 			{
 				free(getitem);
 				return 0;
@@ -356,9 +356,9 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 			free(getitem);
 			return 1;
 		}
-		else if (verify->opt == 0)
+		else if (LE_USHORT(verify->opt) == 0)
 		{
-			if (verify->length > 0 || verify->offset > 0 || verify->length > itemlength)
+			if (LE_USHORT(verify->length) > 0 || LE_USHORT(verify->offset) > 0 || LE_USHORT(verify->length) > itemlength)
 			{
 				free(getitem);
 				return 0;
@@ -367,7 +367,7 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 			free(getitem);
 			return 1;
 		}
-		else if (verify->opt > 1 || verify->opt < 0)
+		else if (LE_USHORT(verify->opt) > 1 || LE_USHORT(verify->opt) < 0)
 		{
 			free(getitem);
 			return 0;
@@ -384,24 +384,24 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 		memcpy(getitem, item, itemlength);
 		verify = (ANIMLINE*)getitem;
 
-		if (verify->opt != 1 || verify->length == 0 || verify->offset == 0)
+		if (LE_USHORT(verify->opt) != 1 || LE_USHORT(verify->length) == 0 || LE_USHORT(verify->offset) == 0)
 		{
 			free(getitem);
 			return 0;
 		}
 
-		if (verify->length > itemlength)
+		if (LE_USHORT(verify->length) > itemlength)
 		{
 			free(getitem);
 			return 0;
 		}
 
-		memcpy(getitem, item + 8 + verify->length, itemlength - verify->length + 8);
+		memcpy(getitem, item + 8 + LE_USHORT(verify->length), itemlength - LE_USHORT(verify->length) + 8);
 		verify = (ANIMLINE*)getitem;
 
-		if (verify->opt == 1)
+		if (LE_USHORT(verify->opt) == 1)
 		{
-			if (verify->length == 0 || verify->offset == 0 || verify->length > itemlength)
+			if (LE_USHORT(verify->length) == 0 || LE_USHORT(verify->offset) == 0 || LE_USHORT(verify->length) > itemlength)
 			{
 				free(getitem);
 				return 0;
@@ -410,9 +410,9 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 			free(getitem);
 			return 1;
 		}
-		else if (verify->opt == 0)
+		else if (LE_USHORT(verify->opt) == 0)
 		{
-			if (verify->length > 0 || verify->offset > 0 || verify->length > itemlength)
+			if (LE_USHORT(verify->length) > 0 || LE_USHORT(verify->offset) > 0 || LE_USHORT(verify->length) > itemlength)
 			{
 				free(getitem);
 				return 0;
@@ -421,7 +421,7 @@ static int VerifyAGX(char* item, int mode, int itemlength)
 			free(getitem);
 			return 1;
 		}
-		else if (verify->opt > 1 || verify->opt < 0)
+		else if (LE_USHORT(verify->opt) > 1 || LE_USHORT(verify->opt) < 0)
 		{
 			free(getitem);
 			return 0;
@@ -462,7 +462,7 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 		return 0;
 	}
 
-	if (verifyagx->opt == 1 || itemlength == 8)
+	if (LE_USHORT(verifyagx->opt) == 1 || itemlength == 8)
 	{
 		startoffset = 8;
 		readstart = 0;
@@ -473,8 +473,8 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 		readstart = 1;
 	}
 
-	if (verifyagx->fill == 0 && verifyagx->length == 0 &&
-		verifyagx->offset == 0 && verifyagx->opt == 0 &&
+	if (LE_USHORT(verifyagx->fill) == 0 && LE_USHORT(verifyagx->length) == 0 &&
+		LE_USHORT(verifyagx->offset) == 0 && LE_USHORT(verifyagx->opt) == 0 &&
 		itemlength == 8)
 		emptyframe = 1;
 
@@ -503,7 +503,7 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 		if (!emptyframe)
 			memcpy(readagxpos, item + startoffset, itemlength - startoffset);
 
-		int block_end = agx->length;
+		int block_end = LE_USHORT(agx->length);
 		int transcnt = 0;
 
 		for (int i = 0; i < 320 * 200; i++, transcnt++)
@@ -526,12 +526,12 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 
 		while (1)
 		{
-			if (!agx->opt)
+			if (!LE_USHORT(agx->opt))
 			{
 				break;
 			}
 
-			n = agx->offset * 4;
+			n = LE_USHORT(agx->offset) * 4;
 
 			for (int i = 0; i < block_end; i++, pos++)
 			{
@@ -552,7 +552,7 @@ char* ConvertGraphicsAGX(char* item, char* itemname, int itemlength)
 
 			memcpy(readagxpos, item + startpos, itemlength - startpos);
 			agx = (ANIMLINE*)readagxpos;
-			block_end = agx->length;
+			block_end = LE_USHORT(agx->length);
 
 			startpos += 8;
 		}
@@ -623,7 +623,7 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 
 	map = (MAZELEVEL*)item;
 
-	if (map->sizerec != itemlength)
+	if (LE_LONG(map->sizerec) != itemlength)
 		return 0;
 
 	if (!tileidflag)
@@ -666,9 +666,9 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 
 	for (int i = 0; i < 1350; i++)
 	{
-		if (tileid[map->map[i].fgame + 1] == -1)
+		if (tileid[LE_SHORT(map->map[i].fgame) + 1] == -1)
 		{
-			printf("%s needs tileset %d conversion aborted\n", itemname, map->map[i].fgame);
+			printf("%s needs tileset %d conversion aborted\n", itemname, LE_SHORT(map->map[i].fgame));
 			free(outbuffer);
 			free(tilebuffer);
 			return 0;
@@ -676,42 +676,42 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 
 		if (convgraphicmapdebrisflag)
 		{
-			if (flatid[map->map[i].fgame + 1] == -1)
+			if (flatid[LE_SHORT(map->map[i].fgame) + 1] == -1)
 			{
-				printf("%s needs FLATSG%d_ITM conversion aborted\n", itemname, map->map[i].fgame);
+				printf("%s needs FLATSG%d_ITM conversion aborted\n", itemname, LE_SHORT(map->map[i].fgame));
 				free(outbuffer);
 				free(tilebuffer);
 				return 0;
 			}
 
-			if (saveflat != map->map[i].fgame + 1)
+			if (saveflat != LE_SHORT(map->map[i].fgame) + 1)
 			{
-				flatbuffer = GLB_GetItem(flatid[map->map[i].fgame + 1]);
+				flatbuffer = GLB_GetItem(flatid[LE_SHORT(map->map[i].fgame) + 1]);
 
 				if (!flatbuffer)
 				{
-					printf("Couldnt not load FLATSG%d_ITM conversion aborted\n", flatid[map->map[i].fgame + 1]);
+					printf("Couldnt not load FLATSG%d_ITM conversion aborted\n", flatid[LE_SHORT(map->map[i].fgame) + 1]);
 					free(outbuffer);
 					free(tilebuffer);
 					return 0;
 				}
 
-				flatsize = GLB_ItemSize(flatid[map->map[i].fgame + 1]);
+				flatsize = GLB_ItemSize(flatid[LE_SHORT(map->map[i].fgame) + 1]);
 				getflat = (char*)malloc(flatsize);
 
-				saveflat = map->map[i].fgame + 1;
+				saveflat = LE_SHORT(map->map[i].fgame) + 1;
 			}
 
-			memcpy(getflat, flatbuffer + map->map[i].flats * 8, flatsize - map->map[i].flats * 8);
+			memcpy(getflat, flatbuffer + LE_SHORT(map->map[i].flats) * 8, flatsize - LE_SHORT(map->map[i].flats) * 8);
 			flat = (FLATS*)getflat;
 
-			if (map->map[i].flats == flat->linkflat)
-				buffer = GLB_GetItem(map->map[i].flats + tileid[map->map[i].fgame + 1]);
+			if (LE_SHORT(map->map[i].flats) == LE_LONG(flat->linkflat))
+				buffer = GLB_GetItem(LE_SHORT(map->map[i].flats) + tileid[LE_SHORT(map->map[i].fgame) + 1]);
 			else
-				buffer = GLB_GetItem(flat->linkflat + tileid[map->map[i].fgame + 1]);
+				buffer = GLB_GetItem(LE_LONG(flat->linkflat) + tileid[LE_SHORT(map->map[i].fgame) + 1]);
 		}
 		else
-			buffer = GLB_GetItem(map->map[i].flats + tileid[map->map[i].fgame + 1]);
+			buffer = GLB_GetItem(LE_SHORT(map->map[i].flats) + tileid[LE_SHORT(map->map[i].fgame) + 1]);
 
 		if (!buffer)
 		{
@@ -755,12 +755,12 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 		goto skipspritemode;
 
 	getsprite = (char*)malloc(itemlength);
-	memcpy(getsprite, item + map->spriteoff, itemlength - map->spriteoff);
+	memcpy(getsprite, item + LE_LONG(map->spriteoff), itemlength - LE_LONG(map->spriteoff));
 	sprite = (CSPRITE*)getsprite;
 	spriteairground = (char*)malloc(4800 * 288);
 
-	sprintf(itmname, "SPRITE%d_ITM", sprite->game + 1);
-	saveitmid = sprite->game;
+	sprintf(itmname, "SPRITE%d_ITM", LE_LONG(sprite->game) + 1);
+	saveitmid = LE_LONG(sprite->game);
 	getitemid = GLB_GetItemID(itmname);
 
 	if (getitemid == -1)
@@ -800,18 +800,18 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 			checkmode[i] = 1;
 	}
 
-	for (int i = 0; i <= map->numsprites; i++)
+	for (int i = 0; i <= LE_LONG(map->numsprites); i++)
 	{
-		if (sprite->game == saveitmid)
-			memcpy(getspriteitmbuf, getspriteitm + sprite->slib * 528, itembufsize - sprite->slib * 528);
+		if (LE_LONG(sprite->game) == saveitmid)
+			memcpy(getspriteitmbuf, getspriteitm + LE_LONG(sprite->slib) * 528, itembufsize - LE_LONG(sprite->slib) * 528);
 
-		if (checkmode[sprite->level] != 1)
+		if (checkmode[LE_LONG(sprite->level)] != 1)
 			goto skipsprite;
 
-		if (sprite->game != saveitmid)
+		if (LE_LONG(sprite->game) != saveitmid)
 		{
-			sprintf(itmname, "SPRITE%d_ITM", sprite->game + 1);
-			saveitmid = sprite->game;
+			sprintf(itmname, "SPRITE%d_ITM", LE_LONG(sprite->game) + 1);
+			saveitmid = LE_LONG(sprite->game);
 			getitemid = GLB_GetItemID(itmname);
 
 			if (getitemid == -1)
@@ -828,7 +828,7 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 			getspriteitm = GLB_GetItem(getitemid);
 			itembufsize = GLB_ItemSize(getitemid);
 			getspriteitmbuf = (char*)malloc(itembufsize);
-			memcpy(getspriteitmbuf, getspriteitm + sprite->slib * 528, itembufsize - sprite->slib * 528);
+			memcpy(getspriteitmbuf, getspriteitm + LE_LONG(sprite->slib) * 528, itembufsize - LE_LONG(sprite->slib) * 528);
 		}
 
 		spriteitm = (SPRITE*)getspriteitmbuf;
@@ -862,26 +862,26 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 		convsprite = (GFX_SPRITE*)convspritepic;
 		convpic = (GFX_PIC*)buffer;
 
-		block_end = convsprite->length;
+		block_end = LE_LONG(convsprite->length);
 
 		possprite = 0;
 		n = 0;
 
-		spritedata = (char*)malloc(convpic->width * convpic->height);
+		spritedata = (char*)malloc(LE_LONG(convpic->width) * LE_LONG(convpic->height));
 
-		for (int i = 0; i < convpic->width * convpic->height; i++)
+		for (int i = 0; i < LE_LONG(convpic->width) * LE_LONG(convpic->height); i++)
 		{
 			spritedata[i] = 0;
 		}
 
 		while (1)
 		{
-			if (convsprite->offset == 0xFFFFFFFF && convsprite->length == 0xFFFFFFFF)
+			if (LE_LONG(convsprite->offset) == 0xFFFFFFFF && LE_LONG(convsprite->length) == 0xFFFFFFFF)
 			{
 				break;
 			}
 
-			n = (convsprite->y * convpic->width) + convsprite->x;
+			n = (LE_LONG(convsprite->y) * LE_LONG(convpic->width)) + LE_LONG(convsprite->x);
 
 			for (int i = 0; i < block_end; i++, possprite++)
 			{
@@ -895,58 +895,58 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 			memcpy(convspritepic, buffer + startpos, spritebufsize - startpos);
 
 			convsprite = (GFX_SPRITE*)convspritepic;
-			block_end = convsprite->length;
+			block_end = LE_LONG(convsprite->length);
 		}
 
-		pos = ((sprite->y * 9 * 32 * 32) + (sprite->x * 32));
+		pos = ((LE_LONG(sprite->y) * 9 * 32 * 32) + (LE_LONG(sprite->x) * 32));
 
-		if (spritepic->width == 96 && spritepic->height == 96)
+		if (LE_LONG(spritepic->width) == 96 && LE_LONG(spritepic->height) == 96)
 		{
 			pos -= 9248;
 		}
-		else if (spritepic->width == 96 && spritepic->height == 64)
+		else if (LE_LONG(spritepic->width) == 96 && LE_LONG(spritepic->height) == 64)
 		{
 			pos -= 4640;
 		}
-		else if (spritepic->width == 64 && spritepic->height == 64)
+		else if (LE_LONG(spritepic->width) == 64 && LE_LONG(spritepic->height) == 64)
 		{
 			pos -= 4624;
 		}
-		else if (spritepic->width == 24 && spritepic->height == 24)
+		else if (LE_LONG(spritepic->width) == 24 && LE_LONG(spritepic->height) == 24)
 		{
 			pos += 1156;
 		}
-		else if (spritepic->width == 16 && spritepic->height == 16)
+		else if (LE_LONG(spritepic->width) == 16 && LE_LONG(spritepic->height) == 16)
 		{
 			pos += 2312;
 		}
 
 		if (pos < 0 || pos > 4800 * 288)
-			pos = ((sprite->y * 9 * 32 * 32) + (sprite->x * 32));
+			pos = ((LE_LONG(sprite->y) * 9 * 32 * 32) + (LE_LONG(sprite->x) * 32));
 
-		rowx = 32 * (9 - sprite->x);
-		rowmax = ((sprite->y * 9 * 32 * 32) + (9 * 32));
+		rowx = 32 * (9 - LE_LONG(sprite->x));
+		rowmax = ((LE_LONG(sprite->y) * 9 * 32 * 32) + (9 * 32));
 		rowcount = 1;
 
-		if (spritepic->width > rowx)
+		if (LE_LONG(spritepic->width) > rowx)
 			rowmaxflag = 1;
 		else
 			rowmaxflag = 0;
 
-		if (spriteitm->flighttype == 3 || spriteitm->flighttype == 4 || spriteitm->flighttype == 5)
+		if (LE_LONG(spriteitm->flighttype) == 3 || LE_LONG(spriteitm->flighttype) == 4 || LE_LONG(spriteitm->flighttype) == 5)
 			groundflag = 1;
 		else
 			groundflag = 0;
 
-		for (int i = 0; i < spritepic->height * spritepic->width; i++, pos++)
+		for (int i = 0; i < LE_LONG(spritepic->height) * LE_LONG(spritepic->width); i++, pos++)
 		{
-			if (spritepic->width > rowx && pos == rowmax)
+			if (LE_LONG(spritepic->width) > rowx && pos == rowmax)
 			{
 				rowmax += 288;
 				pos += (288 - rowx);
-				i += spritepic->width - rowx;
+				i += LE_LONG(spritepic->width) - rowx;
 
-				if (i == spritepic->height * spritepic->width)
+				if (i == LE_LONG(spritepic->height) * LE_LONG(spritepic->width))
 					i--;
 			}
 
@@ -961,9 +961,9 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 				spriteairground[pos] = outbuffer[pos];
 			}
 
-			if (rowcount == spritepic->width && !rowmaxflag)
+			if (rowcount == LE_LONG(spritepic->width) && !rowmaxflag)
 			{
-				pos += (288 - spritepic->width);
+				pos += (288 - LE_LONG(spritepic->width));
 
 				rowcount = 0;
 			}
@@ -976,7 +976,7 @@ char* ConvertGraphicsMAP(char* item, char* itemname, int itemlength)
 
 	skipsprite:;
 
-		memcpy(getsprite, item + map->spriteoff + spritepos, itemlength - map->spriteoff - spritepos);
+		memcpy(getsprite, item + LE_LONG(map->spriteoff) + spritepos, itemlength - LE_LONG(map->spriteoff) - spritepos);
 		sprite = (CSPRITE*)getsprite;
 
 		spritepos += 24;

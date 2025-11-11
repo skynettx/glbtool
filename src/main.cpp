@@ -129,10 +129,10 @@ int main(int argc, char** argv)
 	const char* convgraphicsmapsprite = "-gs";
 	const char* convsounds = "-s";
 	const char* convmusic = "-m";
-	char line;
+	int line;
 
 	printf("********************************************************************************\n"
-		" GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.4\n"
+		" GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.5\n"
 		"********************************************************************************\n");
 
 	if (!argv[1])

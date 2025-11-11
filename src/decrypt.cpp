@@ -108,7 +108,7 @@ int GLB_NumItems(int filenum)
 
 	GLB_DeCrypt(serial, &head, sizeof(head));
 
-	return head.offset;
+	return LE_LONG(head.offset);
 }
 
 void GLB_LoadIDT(filedesc_t* fd)
@@ -133,11 +133,11 @@ void GLB_LoadIDT(filedesc_t* fd)
 		{
 			GLB_DeCrypt(serial, &buf[k], sizeof(glbitem_t));
 
-			if (buf[k].crypt == 1)
+			if (LE_LONG(buf[k].crypt) == 1)
 				ve->flags |= 0x40000000;
 
-			ve->length = buf[k].length;
-			ve->offset = buf[k].offset;
+			ve->length = LE_LONG(buf[k].length);
+			ve->offset = LE_LONG(buf[k].offset);
 			memcpy(ve->name, buf[k].name, 16);
 			ve++;
 		}
@@ -705,7 +705,7 @@ void GLB_ConvertItems(void)
 				if (outbuffer)
 				{
 					if (!agxmode && !mapmode && !soundmode && !musicmode)
-						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
+						WriteGraphics(outbuffer, outdirectory, LE_LONG(picture->width), LE_LONG(picture->height));
 					else if (mapmode)
 						WriteGraphics(outbuffer, outdirectory, 288, 4800);
 					else if (soundmode)
@@ -741,14 +741,14 @@ void GLB_ConvertItems(void)
 
 					if (!agxmode && !mapmode && !soundmode && !musicmode)
 					{
-						if (picture->type == GPIC)
+						if (LE_LONG((int)picture->type) == GPIC)
 							printf("Itemtype: GPIC\n");
 
-						if (picture->type == GSPRITE)
+						if (LE_LONG((int)picture->type) == GSPRITE)
 							printf("Itemtype: GSPRITE\n");
 
-						printf("Width of item: %0d\n", picture->width);
-						printf("Height of item: %0d\n", picture->height);
+						printf("Width of item: %0d\n", LE_LONG(picture->width));
+						printf("Height of item: %0d\n", LE_LONG(picture->height));
 						printf("Encoding item to: %s\n", outdirectory);
 					}
 					else if (mapmode)
@@ -865,7 +865,7 @@ void GLB_ConvertItems(void)
 				if (outbuffer)
 				{
 					if (!agxmode && !mapmode && !soundmode && !musicmode)
-						WriteGraphics(outbuffer, outdirectory, picture->width, picture->height);
+						WriteGraphics(outbuffer, outdirectory, LE_LONG(picture->width), LE_LONG(picture->height));
 					else if (mapmode)
 						WriteGraphics(outbuffer, outdirectory, 288, 4800);
 					else if (soundmode)
@@ -902,14 +902,14 @@ void GLB_ConvertItems(void)
 					if (!agxmode && !mapmode && !soundmode && !musicmode)
 					{
 
-						if (picture->type == GPIC)
+						if (LE_LONG((int)picture->type) == GPIC)
 							printf("Itemtype: GPIC\n");
 
-						if (picture->type == GSPRITE)
+						if (LE_LONG((int)picture->type) == GSPRITE)
 							printf("Itemtype: GSPRITE\n");
 
-						printf("Width of item: %0d\n", picture->width);
-						printf("Height of item: %0d\n", picture->height);
+						printf("Width of item: %0d\n", LE_LONG(picture->width));
+						printf("Height of item: %0d\n", LE_LONG(picture->height));
 						printf("Encoding item to: %s\n", outdirectory);
 					}
 					else if (mapmode)

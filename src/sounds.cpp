@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include "main.h"
 #include "sounds.h"
 
 #ifdef _WIN32
@@ -56,6 +57,16 @@ static void SetWAVEHeader(waveheader_t* waveheader, int itemlength)
 	waveheader->BlockAlign = waveheader->NumChannels * waveheader->BitsPerSample / 8;
 	strcpy((char*)waveheader->Subchunk2ID, "data");
 	waveheader->Subchunk2Size = itemlength - 8;
+
+	waveheader->ChunkSize = LE_ULONG(waveheader->ChunkSize);
+	waveheader->Subchunk1Size = LE_ULONG(waveheader->Subchunk1Size);
+	waveheader->AudioFormat = LE_USHORT(waveheader->AudioFormat);
+	waveheader->NumChannels = LE_USHORT(waveheader->NumChannels);
+	waveheader->SampleRate = LE_ULONG(waveheader->SampleRate);
+	waveheader->BitsPerSample = LE_USHORT(waveheader->BitsPerSample);
+	waveheader->ByteRate = LE_ULONG(waveheader->ByteRate);
+	waveheader->BlockAlign = LE_USHORT(waveheader->BlockAlign);
+	waveheader->Subchunk2Size = LE_ULONG(waveheader->Subchunk2Size);
 }
 
 char* ConvertSounds(char* item, char* itemname, int itemlength)
@@ -70,8 +81,8 @@ char* ConvertSounds(char* item, char* itemname, int itemlength)
 
 	dspheader = (dsp_t*)item;
 
-	if (dspheader->format != 3 || dspheader->freq != 11025 ||
-		dspheader->length != itemlength - 8)
+	if (LE_SHORT(dspheader->format) != 3 || LE_SHORT(dspheader->freq) != 11025 ||
+		LE_LONG(dspheader->length) != itemlength - 8)
 		return 0;
 
 	waveheader = (waveheader_t*)malloc(sizeof(waveheader_t));

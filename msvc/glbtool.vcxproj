@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\decrypt.h" />
     <ClInclude Include="..\src\encrypt.h" />
+    <ClInclude Include="..\src\endianness.h" />
     <ClInclude Include="..\src\graphics.h" />
     <ClInclude Include="..\src\lodepng.h" />
     <ClInclude Include="..\src\main.h" />
