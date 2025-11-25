@@ -20,6 +20,7 @@ extern char outfilename[260];
 extern char getdirectory[260];
 extern char** allinfilenames;
 extern char** alloutfilenames;
+extern char** allencryptflags;
 extern int allinfilenamescnt;
 extern int itemcount;
 extern int itemcountsave;

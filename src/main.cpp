@@ -32,6 +32,7 @@ char outfilename[260];
 char getdirectory[260];
 char** allinfilenames;
 char** alloutfilenames;
+char** allencryptflags;
 int allinfilenamescnt;
 int itemcount = 0;
 int itemcountsave;
@@ -338,13 +339,91 @@ int main(int argc, char** argv)
 
 			allinfilenames = (char**)malloc((allinfilenamescnt) * sizeof * allinfilenames);
 			alloutfilenames = (char**)malloc((allinfilenamescnt) * sizeof * alloutfilenames);
+			allencryptflags = (char**)malloc((allinfilenamescnt) * sizeof * allencryptflags);
+
+			char getline[360];
+			char p[360];
 
 			for (int i = 0; i < allinfilenamescnt; i++)
 			{
-				allinfilenames[i] = (char*)malloc(allinfilenamescnt);
-				alloutfilenames[i] = (char*)malloc(allinfilenamescnt);
+				//allinfilenames[i] = (char*)malloc(allinfilenamescnt);
+				//alloutfilenames[i] = (char*)malloc(allinfilenamescnt);
+				//allencryptflags[i] = (char*)malloc(allinfilenamescnt);
 
-				fscanf(linkfile, "%s %s\n", allinfilenames[i], alloutfilenames[i]);
+				allinfilenames[i] = (char*)malloc(sizeof(getline));
+				alloutfilenames[i] = (char*)malloc(sizeof(getline));
+				allencryptflags[i] = (char*)malloc(sizeof(getline));
+
+				//fscanf(linkfile, "%s %s\n", allinfilenames[i], alloutfilenames[i]);
+
+				fgets(getline, sizeof(getline), linkfile);
+				getline[strcspn(getline, "\n")] = '\0';
+
+				int j = 0;
+				int getenflag = 1;
+				int getinfn = 0;
+				int checkline = 0;
+
+				for (int n = 0; n < strlen(getline); n++)
+				{
+					if (getline[n] == '"')
+					{
+						memset(p, 0, sizeof(p));
+						n++;
+						checkline++;
+						while (getline[n] != '"')
+						{
+							p[j] = getline[n];
+							n++;
+							j++;
+							if (n > strlen(getline))
+							{
+								printf("Error in linkfile %s line %d, number of quotation marks %d\n", infilename, i + 1, checkline);
+								free(allinfilenames);
+								free(alloutfilenames);
+								free(allencryptflags);
+								fclose(linkfile);
+								return 0;
+							}
+						}
+						if (getenflag)
+						{
+							if ((strcmp(p, "1") != 0) && (strcmp(p, "0") != 0))
+							{
+								printf("Error in linkfile %s line %d, encryption flag must be 0 or 1\n", infilename, i + 1);
+								free(allinfilenames);
+								free(alloutfilenames);
+								free(allencryptflags);
+								fclose(linkfile);
+								return 0;
+							}
+							strcpy(allencryptflags[i], p);
+							getenflag = 0;
+							getinfn = 1;
+							goto next;
+						}
+						if (getinfn)
+						{
+							strcpy(allinfilenames[i], p);
+							getinfn = 0;
+							goto next;
+						}
+						else
+							strcpy(alloutfilenames[i], p);
+					next:;
+						j = 0;
+						checkline++;
+					}
+				}
+				if (checkline != 6)
+				{
+					printf("Error in linkfile %s line %d, number of quotation marks %d\n", infilename, i + 1, checkline);
+					free(allinfilenames);
+					free(alloutfilenames);
+					free(allencryptflags);
+					fclose(linkfile);
+					return 0;
+				}
 
 				if (strcmp(alloutfilenames[i], "LABEL") == 0)
 					strcpy(alloutfilenames[i], "");
@@ -689,7 +768,10 @@ int main(int argc, char** argv)
 		free(allinfilenames);
 
 		if (encryptlinkflag)
+		{
 			free(alloutfilenames);
+			free(allencryptflags);
+		}
 	}
 
 	if (extractflag)

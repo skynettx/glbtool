@@ -312,6 +312,7 @@ void GLB_Extract(void)
 	FILE* lf;
 	int fc;
 	int i, j;
+	int getenflag;
 	int foundflag = 0;
 	int labelflag = 0;
 	char* buffer;
@@ -373,15 +374,22 @@ void GLB_Extract(void)
 				lf = fopen(linkfile, "a");
 				fseek(lf, 0, SEEK_END);
 
+				if (fi->flags)
+					getenflag = 1;
+				else
+					getenflag = 0;
+
 				if (!labelflag)
 				{
-					fprintf(lf, "%s ", outdirectory);
-					fprintf(lf, "%s\n", fi->name);
+					//fprintf(lf, "%s ", outdirectory);
+					//fprintf(lf, "%s\n", fi->name);
+					fprintf(lf, "Linenumber %d = Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", j + 1, getenflag, outdirectory, fi->name);
 				}
 				else
 				{
-					fprintf(lf, "%s ", outdirectory);
-					fprintf(lf, "%s\n", "LABEL");
+					//fprintf(lf, "%s ", outdirectory);
+					//fprintf(lf, "%s\n", "LABEL");
+					fprintf(lf, "Linenumber %d = Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", j + 1, getenflag, outdirectory, "LABEL");
 				}
 
 				fclose(lf);
@@ -424,15 +432,22 @@ void GLB_Extract(void)
 				lf = fopen(linkfile, "a");
 				fseek(lf, 0, SEEK_END);
 
+				if (fi->flags)
+					getenflag = 1;
+				else
+					getenflag = 0;
+
 				if (!labelflag)
 				{
-					fprintf(lf, "%s ", outdirectory);
-					fprintf(lf, "%s\n", fi->name);
+					//fprintf(lf, "%s ", outdirectory);
+					//fprintf(lf, "%s\n", fi->name);
+					fprintf(lf, "Linenumber %d = Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", j + 1, getenflag, outdirectory, fi->name);
 				}
 				else
 				{
-					fprintf(lf, "%s ", outdirectory);
-					fprintf(lf, "%s\n", "LABEL");
+					//fprintf(lf, "%s ", outdirectory);
+					//fprintf(lf, "%s\n", "LABEL");
+					fprintf(lf, "Linenumber %d = Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", j + 1, getenflag, outdirectory, "LABEL");
 				}
 
 				fclose(lf);

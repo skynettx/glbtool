@@ -185,9 +185,17 @@ void fat_flag_encryption(struct fitem_t* ffat, int nfiles)
 
 	end = ffat + nfiles;
 
-	for (; ffat < end; ffat++)
+	/*for (; ffat < end; ffat++)
 	{
 		ffat->flags = 1;
+	}*/
+
+	for (int i = 0; ffat < end; i++, ffat++)
+	{
+		if (strcmp(allencryptflags[i], "1") == 0)
+			ffat->flags = 1;
+		else
+			ffat->flags = 0;
 	}
 
 	return;
@@ -310,7 +318,8 @@ void GLB_Create(char* outfilename)
 			printf("Bytes read not equal to file length %s\n", allinfilenames[filecnt]);
 		}
 
-		encrypt_file(&state, buffer, ffat[i].length);
+		if(ffat[i].flags)
+			encrypt_file(&state, buffer, ffat[i].length);
 
 		bytes = write(wd, buffer, ffat[i].length);
 
