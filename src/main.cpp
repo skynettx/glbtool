@@ -114,6 +114,14 @@ char* RemovePathFromString(char* p)
 	return fn;
 }
 
+void freemem(const char* message)
+{
+	printf("%s\n", message);
+	free(allencryptflags);
+	free(allinfilenames);
+	free(alloutfilenames);
+}
+
 int main(int argc, char** argv)
 {
 	const char* help = "-h";
@@ -147,7 +155,8 @@ int main(int argc, char** argv)
 	{
 		printf("-x  Extract items from <INPUTFILE.GLB>\n"
 			"    optional <SearchItemNameNumber> only extract found items\n"
-			"-e  Encrypt items from <INPUTFILE>... to <OUTPUTFILE.GLB>\n"
+			"-e  Encrypt items from [encryptflag<1=On2=Off> <INPUTFILE> <ITEMNAME>]...\n" 
+			"    to <OUTPUTFILE.GLB>\n"
 			"-ea Encrypt all items from <INPUTFOLDER> to <OUTPUTFILE.GLB>\n"
 			"-el Encrypt all items from <LINKFILE.txt> to <OUTPUTFILE.GLB>\n"
 			"-l  List items from <INPUTFILE.GLB>\n"
@@ -194,49 +203,108 @@ int main(int argc, char** argv)
 	{
 		encryptflag = 1;
 
-		allinfilenames = (char**)malloc((argc + 1) * sizeof * allinfilenames);
+		//allinfilenames = (char**)malloc((argc + 1) * sizeof * allinfilenames);
+		allencryptflags = (char**)malloc((argc / 3 + 1) * sizeof * allencryptflags);
+		allinfilenames = (char**)malloc((argc / 3 + 1) * sizeof * allinfilenames);
+		alloutfilenames = (char**)malloc((argc / 3 + 1) * sizeof * alloutfilenames);
 		allinfilenamescnt = argc;
-
-		if (argv[2] && argc > 3)
+		
+		//if (argv[2] && argc > 3)
+		if (argv[3] && argc > 4)
 		{
-
-			for (int i = 0; i < argc; ++i)
+			int enflagloop = 0;
+			int infnloop = 0;
+			int outfnloop = 0;
+			for (int i = 2; i < argc; i++)
 			{
-				size_t length = strlen(argv[i]) + 1;
-				allinfilenames[i] = (char*)malloc(length);
-				memcpy(allinfilenames[i], argv[i], length);
-
-				if (i > 1 && i < argc - 1)
+				if (i < argc - 1)
 				{
-					strncpy(infilename, argv[i], 260);
+					if ((strcmp(argv[i], "0") != 0) && (strcmp(argv[i], "1") != 0))
+					{
+						freemem("Error encryption flag must be 0 or 1");
+						return 0;
+					}
+					size_t lengthenflag = strlen(argv[i]) + 1;
+					allencryptflags[enflagloop] = (char*)malloc(lengthenflag);
+					memcpy(allencryptflags[enflagloop], argv[i], lengthenflag);
+					enflagloop++;
+				}
+
+				i++;
+
+				if (i < argc - 1)
+				{
+					if (access(argv[i], 0))
+					{
+						freemem("Input file not found");
+						return 0;
+					}
+					size_t lengthinfile = strlen(argv[i]) + 1;
+					allinfilenames[infnloop] = (char*)malloc(lengthinfile);
+					memcpy(allinfilenames[infnloop], argv[i], lengthinfile);
+					infnloop++;
+				}
+
+				i++;
+
+				if (i < argc - 1)
+				{
+					size_t lengthoutfile = strlen(argv[i]) + 1;
+					alloutfilenames[outfnloop] = (char*)malloc(lengthoutfile);
+					memcpy(alloutfilenames[outfnloop], argv[i], lengthoutfile);
+					outfnloop++;
+				}
+
+				/*if (i > 2 && i < argc - 1)
+				{
+					strncpy(infilename, argv[i - 1], 260);
 
 					if (access(infilename, 0))
 					{
-						printf("Input file not found\n");
+						freemem("Input file not found");
 						return 0;
 					}
-				}
+				}*/
 
-				if (i == argc - 1)
-					strncpy(outfilename, argv[i], 260);
+				//if (i == argc - 1)
+				if(i == argc + 1)
+					strncpy(outfilename, argv[i - 2], 260);
 			}
 		}
 
 		if (!access(outfilename, 0))
 		{
-			printf("Output filename already exists\n");
+			freemem("Output filename already exists");
 			return 0;
 		}
 
 		if (!argv[2])
 		{
-			printf("No input file specified\n");
+			freemem("No encryption flag set");
 			return 0;
 		}
 
 		if (!argv[3])
 		{
-			printf("No output file specified\n");
+			freemem("No input file specified");
+			return 0;
+		}
+
+		if (!argv[4])
+		{
+			freemem("No itemname specified");
+			return 0;
+		}
+
+		if ((!argv[5]))
+		{
+			freemem("No output file specified");
+			return 0;
+		}
+
+		if (strcmp(outfilename, "") == 0)
+		{
+			freemem("Error to few arguments");
 			return 0;
 		}
 	}
@@ -767,7 +835,7 @@ int main(int argc, char** argv)
 		printf("Total items encrypted: %02d to %s %d Bytes written\n", itemtotal, outfilename, itemtotalsize);
 		free(allinfilenames);
 
-		if (encryptlinkflag)
+		if (encryptlinkflag || encryptflag)
 		{
 			free(alloutfilenames);
 			free(allencryptflags);
