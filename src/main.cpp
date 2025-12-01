@@ -358,6 +358,12 @@ int main(int argc, char** argv)
 		if (argv[4])
 			strncpy(outfilename, argv[4], 260);
 
+		if (!access(outfilename, 0))
+		{
+			printf("Output filename already exists\n");
+			return 0;
+		}
+
 		//allinfilenames = (char**)malloc((4096) * sizeof * allinfilenames);
 		allinfilenamescnt = 0;
 
