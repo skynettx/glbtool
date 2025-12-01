@@ -418,6 +418,12 @@ int main(int argc, char** argv)
 		if (argv[3])
 			strncpy(outfilename, argv[3], 260);
 
+		if (!access(outfilename, 0))
+		{
+			printf("Output filename already exists\n");
+			return 0;
+		}
+
 		FILE* linkfile = fopen(infilename, "r");
 		allinfilenamescnt = 0;
 
