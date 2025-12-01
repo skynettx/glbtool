@@ -205,6 +205,30 @@ int main(int argc, char** argv)
 	{
 		encryptflag = 1;
 
+		if (!argv[2])
+		{
+			printf("No encryption flag set\n");
+			return 0;
+		}
+
+		if (!argv[3])
+		{
+			printf("No input file specified\n");
+			return 0;
+		}
+
+		if (!argv[4])
+		{
+			printf("No itemname specified\n");
+			return 0;
+		}
+
+		if ((!argv[5]))
+		{
+			printf("No output file specified\n");
+			return 0;
+		}
+		
 		//allinfilenames = (char**)malloc((argc + 1) * sizeof * allinfilenames);
 		allencryptflags = (char**)malloc((argc / 3 + 1) * sizeof * allencryptflags);
 		allinfilenames = (char**)malloc((argc / 3 + 1) * sizeof * allinfilenames);
@@ -280,7 +304,7 @@ int main(int argc, char** argv)
 			return 0;
 		}
 
-		if (!argv[2])
+		/*if (!argv[2])
 		{
 			freemem("No encryption flag set");
 			return 0;
@@ -302,7 +326,7 @@ int main(int argc, char** argv)
 		{
 			freemem("No output file specified");
 			return 0;
-		}
+		}*/
 
 		if (strcmp(outfilename, "") == 0)
 		{
