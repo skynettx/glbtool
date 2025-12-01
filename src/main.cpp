@@ -55,6 +55,7 @@ int diffmode = -1;
 int eemode = 0;
 int convsoundflag = 0;
 int convmusicflag = 0;
+int enall;
 
 FILE* infile;
 FILE* outfile;
@@ -155,9 +156,10 @@ int main(int argc, char** argv)
 	{
 		printf("-x  Extract items from <INPUTFILE.GLB>\n"
 			"    optional <SearchItemNameNumber> only extract found items\n"
-			"-e  Encrypt items from [encryptflag<1=On2=Off> <INPUTFILE> <ITEMNAME>]...\n" 
+			"-e  Encrypt items from [encryptflag<0=Off1=On> <INPUTFILE> <ITEMNAME>]...\n" 
 			"    to <OUTPUTFILE.GLB>\n"
-			"-ea Encrypt all items from <INPUTFOLDER> to <OUTPUTFILE.GLB>\n"
+			"-ea Encrypt all items encryptflag <0=Off1=On> from <INPUTFOLDER>\n" 
+			"    to <OUTPUTFILE.GLB>\n"
 			"-el Encrypt all items from <LINKFILE.txt> to <OUTPUTFILE.GLB>\n"
 			"-l  List items from <INPUTFILE.GLB>\n"
 			"    optional <FILENUMBER> for correct item numbers in files > FILE0000.GLB\n"
@@ -315,11 +317,29 @@ int main(int argc, char** argv)
 
 		if (!argv[2])
 		{
+			printf("No encryption flag set\n");
+			return 0;
+		}
+
+		if ((strcmp(argv[2], "0") != 0) && (strcmp(argv[2], "1") != 0))
+		{
+			printf("Error encryption flag must be 0 or 1\n");
+			return 0;
+		}
+		else if (strcmp(argv[2], "0") == 0)
+		{
+			enall = 0;
+		}
+		else
+			enall = 1;
+
+		if (!argv[3])
+		{
 			printf("No input folder specified\n");
 			return 0;
 		}
 
-		strncpy(infilename, argv[2], 260);
+		strncpy(infilename, argv[3], 260);
 		std::string path = infilename;
 		set<fs::path> sort_filename;
 
@@ -329,22 +349,30 @@ int main(int argc, char** argv)
 			return 0;
 		}
 
-		if (!argv[3])
+		if (!argv[4])
 		{
 			printf("No output file specified\n");
 			return 0;
 		}
 
-		if (argv[3])
-			strncpy(outfilename, argv[3], 260);
+		if (argv[4])
+			strncpy(outfilename, argv[4], 260);
 
-		allinfilenames = (char**)malloc((4096) * sizeof * allinfilenames);
+		//allinfilenames = (char**)malloc((4096) * sizeof * allinfilenames);
 		allinfilenamescnt = 0;
 
-		if (argv[2] && argv[3])
+		if (argv[3] && argv[4])
 		{
+			//for (auto& entry : fs::directory_iterator(infilename))
+				//sort_filename.insert(entry.path());
+
 			for (auto& entry : fs::directory_iterator(infilename))
+			{
 				sort_filename.insert(entry.path());
+				allinfilenamescnt++;
+			}
+			allinfilenames = (char**)malloc((allinfilenamescnt) * sizeof * allinfilenames);
+			allinfilenamescnt = 0;
 
 			for (auto& filename : sort_filename)
 			{

@@ -192,10 +192,15 @@ void fat_flag_encryption(struct fitem_t* ffat, int nfiles)
 
 	for (int i = 0; ffat < end; i++, ffat++)
 	{
-		if (strcmp(allencryptflags[i], "1") == 0)
-			ffat->flags = 1;
+		if (encryptflag || encryptlinkflag)
+		{
+			if (strcmp(allencryptflags[i], "1") == 0)
+				ffat->flags = 1;
+			else
+				ffat->flags = 0;
+		}
 		else
-			ffat->flags = 0;
+			ffat->flags = enall;
 	}
 
 	return;
@@ -215,17 +220,18 @@ void GLB_Create(char* outfilename)
 	largest = 0;
 
 	memset(&hfat, 0, sizeof(hfat));
+	filecnt = 0;
 
 	if (encryptflag)
 	{
 		//filecnt = 2;
 		//nfiles = allinfilenamescnt - 3;
-		filecnt = 0;
+		//filecnt = 0;
 		nfiles = (allinfilenamescnt  - 3) / 3;
 	}
 	else
 	{
-		filecnt = 0;
+		//filecnt = 0;
 		nfiles = allinfilenamescnt;
 	}
 

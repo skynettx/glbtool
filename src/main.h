@@ -43,6 +43,7 @@ extern int convsoundflag;
 extern int convmusicflag;
 extern int diffmode;
 extern int eemode;
+extern int enall;
 
 struct meminfo_t
 {
