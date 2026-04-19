@@ -41,6 +41,7 @@ int itemtotalsize = 0;
 int listflag = 0;
 int listallflag = 0;
 int writeheaderflag = 0;
+int writeheaderdosflag = 0;
 int extractflag = 0;
 int encryptflag = 0;
 int encryptallflag = 0;
@@ -133,6 +134,7 @@ int main(int argc, char** argv)
 	const char* list = "-l";
 	const char* listall = "-la";
 	const char* writeheader = "-w";
+	const char* writeheaderdos = "-wd";
 	const char* convgraphics = "-g";
 	const char* convgraphicsmap = "-gm";
 	const char* convgraphicsmapdebris = "-gd";
@@ -169,6 +171,8 @@ int main(int argc, char** argv)
 			"    optional <SearchItemNameNumber> only list found items\n"
 			"-w  Write header file from <INPUTFILE.GLB> and add <FILENUMBER>\n"
 			"    for correct item numbers\n"
+			"-wd Write header file in classic DOS format from <INPUTFILE.GLB> and\n" 
+			"    add <FILENUMBER> for correct item numbers\n"
 			"-g  Convert PIC, BLK, TILE and AGX items from <INPUTFILE.GLB> and <PALETTEFILE>\n"
 			"    to PNG format\n"
 			"    optional <SearchItemNameNumber> only convert found items\n"
@@ -592,9 +596,13 @@ int main(int argc, char** argv)
 		}
 	}
 
-	if (strcmp(argv[1], writeheader) == 0)
+	if (strcmp(argv[1], writeheader) == 0 ||
+		strcmp(argv[1], writeheaderdos) == 0)
 	{
 		writeheaderflag = 1;
+
+		if (strcmp(argv[1], writeheaderdos) == 0)
+			writeheaderdosflag = 1;
 
 		if (!argv[2])
 		{
@@ -921,8 +929,13 @@ int main(int argc, char** argv)
 
 	if (writeheaderflag)
 	{
-		GLB_WriteHeaderFile();
-		printf("Header fileids.h written\n");
+		if(writeheaderdosflag)
+			GLB_WriteHeaderFileDOSFormat();
+		else
+		{
+			GLB_WriteHeaderFile();
+			printf("Header fileids.h written\n");
+		}
 		GLB_FreeAll();
 	}
 

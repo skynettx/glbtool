@@ -582,6 +582,62 @@ void GLB_WriteHeaderFile(void)
 	}
 }
 
+void GLB_WriteHeaderFileDOSFormat(void)
+{
+	fitem_t* fi;
+	int fc;
+	int itemnumber = 0;
+	FILE* hf;
+	char lastname[16];
+	char headername[260];
+	char* p;
+
+
+	strncpy(headername, filename, 260);
+	if ((p = strrchr(headername, '.')) != NULL)
+		*p = '\0';
+
+	strcat(headername, ".inc");
+
+	hf = fopen(headername, "w");
+	fseek(hf, 0, SEEK_END);
+
+	fprintf(hf, "//%s defines\n", filename);
+	fprintf(hf, "\n");
+
+	fclose(hf);
+
+	for (int i = 0; i < num_glbs; i++)
+	{
+		fi = filedesc[i].items;
+		fc = filedesc[i].itemcount + itemcount;
+
+		for (int j = itemcount; j < fc; j++, fi++)
+		{
+			RemoveCharFromString(fi->name, '/');
+
+			if (fi->name[0] != '\0' && strcmp(fi->name, lastname) != 0)
+			{
+				hf = fopen(headername, "a");
+				fseek(hf, 0, SEEK_END);
+
+				if(fi->length != 0)
+					fprintf(hf, "#define %-16s 0x%08x //ITEM:%03d\n", fi->name, j, itemnumber);
+				else
+					fprintf(hf, "#define %-16s 0x%08x //LABEL:\n", fi->name, j);
+
+
+				fclose(hf);
+			}
+			
+			itemnumber++;
+			strncpy(lastname, fi->name, 16);
+		}
+	}
+
+	printf("Header %s written\n", headername);
+}
+
 void GLB_ConvertItems(void)
 {
 	fitem_t* fi;
