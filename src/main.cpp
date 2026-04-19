@@ -557,8 +557,8 @@ int main(int argc, char** argv)
 					return 0;
 				}
 
-				if (strcmp(alloutfilenames[i], "LABEL") == 0)
-					strcpy(alloutfilenames[i], "");
+				/*if (strcmp(alloutfilenames[i], "LABEL") == 0)
+					strcpy(alloutfilenames[i], "");*/
 			}
 		}
 
