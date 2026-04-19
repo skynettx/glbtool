@@ -383,13 +383,13 @@ void GLB_Extract(void)
 				{
 					//fprintf(lf, "%s ", outdirectory);
 					//fprintf(lf, "%s\n", fi->name);
-					fprintf(lf, "Linenumber %d = Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", j + 1, getenflag, outdirectory, fi->name);
+					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, fi->name);
 				}
 				else
 				{
 					//fprintf(lf, "%s ", outdirectory);
 					//fprintf(lf, "%s\n", "LABEL");
-					fprintf(lf, "Linenumber %d = Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", j + 1, getenflag, outdirectory, "LABEL");
+					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, "LABEL");
 				}
 
 				fclose(lf);
@@ -441,13 +441,13 @@ void GLB_Extract(void)
 				{
 					//fprintf(lf, "%s ", outdirectory);
 					//fprintf(lf, "%s\n", fi->name);
-					fprintf(lf, "Linenumber %d = Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", j + 1, getenflag, outdirectory, fi->name);
+					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, fi->name);
 				}
 				else
 				{
 					//fprintf(lf, "%s ", outdirectory);
 					//fprintf(lf, "%s\n", "LABEL");
-					fprintf(lf, "Linenumber %d = Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", j + 1, getenflag, outdirectory, "LABEL");
+					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, "LABEL");
 				}
 
 				fclose(lf);
