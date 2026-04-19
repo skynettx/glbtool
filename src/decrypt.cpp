@@ -323,6 +323,7 @@ void GLB_Extract(void)
 	char getpath[260];
 	char outdirectory[260];
 	char linkfile[260];
+	char itemname[16];
 
 	strncpy(linkfile, getdirectory, 260);
 	strcat(linkfile, "link.txt");
@@ -359,6 +360,7 @@ void GLB_Extract(void)
 				if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
 					fs::create_directory(getdirectory);
 
+				strncpy(itemname, fi->name, 16);
 				RemoveCharFromString(fi->name, '/');
 
 				strncpy(outdirectory, getdirectory, 260);
@@ -383,7 +385,7 @@ void GLB_Extract(void)
 				{
 					//fprintf(lf, "%s ", outdirectory);
 					//fprintf(lf, "%s\n", fi->name);
-					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, fi->name);
+					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, itemname);
 				}
 				else
 				{
@@ -417,6 +419,7 @@ void GLB_Extract(void)
 				if (!fs::is_directory(getdirectory) || !fs::exists(getdirectory))
 					fs::create_directory(getdirectory);
 
+				strncpy(itemname, fi->name, 16);
 				RemoveCharFromString(fi->name, '/');
 
 				strncpy(outdirectory, getdirectory, 260);
@@ -441,7 +444,7 @@ void GLB_Extract(void)
 				{
 					//fprintf(lf, "%s ", outdirectory);
 					//fprintf(lf, "%s\n", fi->name);
-					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, fi->name);
+					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, itemname);
 				}
 				else
 				{
