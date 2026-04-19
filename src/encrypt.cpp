@@ -169,12 +169,17 @@ int fat_entry_init(struct fitem_t* fat, char* path, char* itemname, int offset)
 	if (len > 16)
 		path += len - 16 + 1;
 
-	if (encryptlinkflag || encryptflag)
+	/*if (encryptlinkflag || encryptflag)
 		strcpy(fat->name, itemname);
 	else
 		strcpy(fat->name, path);
 
-	strncpy(fat->name, RemovePathFromString(fat->name), 16);
+	strncpy(fat->name, RemovePathFromString(fat->name), 16);*/
+
+	if (encryptlinkflag || encryptflag)
+		strncpy(fat->name, itemname, 16);
+	else
+		strncpy(fat->name, RemovePathFromString(path), 16);
 
 	return 0;
 }
