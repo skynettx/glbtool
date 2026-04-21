@@ -383,14 +383,10 @@ void GLB_Extract(void)
 
 				if (!labelflag)
 				{
-					//fprintf(lf, "%s ", outdirectory);
-					//fprintf(lf, "%s\n", fi->name);
 					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, itemname);
 				}
 				else
 				{
-					//fprintf(lf, "%s ", outdirectory);
-					//fprintf(lf, "%s\n", "LABEL");
 					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, "");
 				}
 
@@ -442,14 +438,10 @@ void GLB_Extract(void)
 
 				if (!labelflag)
 				{
-					//fprintf(lf, "%s ", outdirectory);
-					//fprintf(lf, "%s\n", fi->name);
 					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, itemname);
 				}
 				else
 				{
-					//fprintf(lf, "%s ", outdirectory);
-					//fprintf(lf, "%s\n", "LABEL");
 					fprintf(lf, "Encrypt file on/off: \"%d\" Infilename: \"%s\" GLBItemname: \"%s\"\n", getenflag, outdirectory, "");
 				}
 
