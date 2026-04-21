@@ -477,8 +477,8 @@ int main(int argc, char** argv)
 			alloutfilenames = (char**)malloc((allinfilenamescnt) * sizeof * alloutfilenames);
 			allencryptflags = (char**)malloc((allinfilenamescnt) * sizeof * allencryptflags);
 
-			char getline[360];
-			char p[360];
+			char getline[780];
+			char p[780];
 
 			for (int i = 0; i < allinfilenamescnt; i++)
 			{
@@ -486,21 +486,27 @@ int main(int argc, char** argv)
 				//alloutfilenames[i] = (char*)malloc(allinfilenamescnt);
 				//allencryptflags[i] = (char*)malloc(allinfilenamescnt);
 
-				allinfilenames[i] = (char*)malloc(sizeof(getline));
+				/*allinfilenames[i] = (char*)malloc(sizeof(getline));
 				alloutfilenames[i] = (char*)malloc(sizeof(getline));
-				allencryptflags[i] = (char*)malloc(sizeof(getline));
+				allencryptflags[i] = (char*)malloc(sizeof(getline));*/
 
 				//fscanf(linkfile, "%s %s\n", allinfilenames[i], alloutfilenames[i]);
 
 				fgets(getline, sizeof(getline), linkfile);
 				getline[strcspn(getline, "\n")] = '\0';
+				
+				size_t linelength = strlen(getline);
+				
+				allinfilenames[i] = (char*)malloc(linelength + 1);
+				alloutfilenames[i] = (char*)malloc(linelength + 1);
+				allencryptflags[i] = (char*)malloc(linelength + 1);
 
 				int j = 0;
 				int getenflag = 1;
 				int getinfn = 0;
 				int checkline = 0;
 
-				for (int n = 0; n < strlen(getline); n++)
+				for (int n = 0; n < linelength; n++)
 				{
 					if (getline[n] == '"')
 					{
@@ -512,7 +518,7 @@ int main(int argc, char** argv)
 							p[j] = getline[n];
 							n++;
 							j++;
-							if (n > strlen(getline))
+							if (n > linelength)
 							{
 								printf("Error in linkfile %s line %d, number of quotation marks %d\n", infilename, i + 1, checkline);
 								free(allinfilenames);
