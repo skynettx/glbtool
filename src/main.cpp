@@ -116,14 +116,6 @@ char* RemovePathFromString(char* p)
 	return fn;
 }
 
-void freemem(const char* message)
-{
-	printf("%s\n", message);
-	free(allencryptflags);
-	free(allinfilenames);
-	free(alloutfilenames);
-}
-
 int main(int argc, char** argv)
 {
 	const char* help = "-h";
@@ -251,7 +243,10 @@ int main(int argc, char** argv)
 				{
 					if ((strcmp(argv[i], "0") != 0) && (strcmp(argv[i], "1") != 0))
 					{
-						freemem("Error encryption flag must be 0 or 1");
+						printf("Error encryption flag must be 0 or 1\n");
+						free(allencryptflags);
+						free(allinfilenames);
+						free(alloutfilenames);
 						return 0;
 					}
 					size_t lengthenflag = strlen(argv[i]) + 1;
@@ -266,7 +261,10 @@ int main(int argc, char** argv)
 				{
 					if (access(argv[i], 0))
 					{
-						freemem("Input file not found");
+						printf("Input file not found\n");
+						free(allencryptflags);
+						free(allinfilenames);
+						free(alloutfilenames);
 						return 0;
 					}
 					size_t lengthinfile = strlen(argv[i]) + 1;
@@ -304,7 +302,10 @@ int main(int argc, char** argv)
 
 		if (!access(outfilename, 0))
 		{
-			freemem("Output filename already exists");
+			printf("Output filename already exists\n");
+			free(allencryptflags);
+			free(allinfilenames);
+			free(alloutfilenames);
 			return 0;
 		}
 
@@ -334,7 +335,10 @@ int main(int argc, char** argv)
 
 		if (strcmp(outfilename, "") == 0)
 		{
-			freemem("Error to few arguments");
+			printf("Error to few arguments\n");
+			free(allencryptflags);
+			free(allinfilenames);
+			free(alloutfilenames);
 			return 0;
 		}
 	}
