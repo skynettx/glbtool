@@ -496,6 +496,16 @@ int main(int argc, char** argv)
 				getline[strcspn(getline, "\n")] = '\0';
 				
 				size_t linelength = strlen(getline);
+
+				if (linelength + 1 > sizeof(getline))
+				{
+					printf("Error in linkfile %s line %d, line longer then %d characters\n", infilename, i + 1, (int)sizeof(getline));
+					free(allinfilenames);
+					free(alloutfilenames);
+					free(allencryptflags);
+					fclose(linkfile);
+					return 0;
+				}
 				
 				allinfilenames[i] = (char*)malloc(linelength + 1);
 				alloutfilenames[i] = (char*)malloc(linelength + 1);
