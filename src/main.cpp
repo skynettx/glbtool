@@ -225,13 +225,11 @@ int main(int argc, char** argv)
 			return 0;
 		}
 		
-		//allinfilenames = (char**)malloc((argc + 1) * sizeof * allinfilenames);
 		allencryptflags = (char**)malloc((argc / 3 + 1) * sizeof * allencryptflags);
 		allinfilenames = (char**)malloc((argc / 3 + 1) * sizeof * allinfilenames);
 		alloutfilenames = (char**)malloc((argc / 3 + 1) * sizeof * alloutfilenames);
 		allinfilenamescnt = argc;
 		
-		//if (argv[2] && argc > 3)
 		if (argv[3] && argc > 4)
 		{
 			int enflagloop = 0;
@@ -283,19 +281,7 @@ int main(int argc, char** argv)
 					outfnloop++;
 				}
 
-				/*if (i > 2 && i < argc - 1)
-				{
-					strncpy(infilename, argv[i - 1], 260);
-
-					if (access(infilename, 0))
-					{
-						freemem("Input file not found");
-						return 0;
-					}
-				}*/
-
-				//if (i == argc - 1)
-				if(i == argc + 1)
+				if (i == argc + 1)
 					strncpy(outfilename, argv[i - 2], 260);
 			}
 		}
@@ -308,31 +294,7 @@ int main(int argc, char** argv)
 			free(alloutfilenames);
 			return 0;
 		}
-
-		/*if (!argv[2])
-		{
-			freemem("No encryption flag set");
-			return 0;
-		}
-
-		if (!argv[3])
-		{
-			freemem("No input file specified");
-			return 0;
-		}
-
-		if (!argv[4])
-		{
-			freemem("No itemname specified");
-			return 0;
-		}
-
-		if ((!argv[5]))
-		{
-			freemem("No output file specified");
-			return 0;
-		}*/
-
+		
 		if (strcmp(outfilename, "") == 0)
 		{
 			printf("Error to few arguments\n");
@@ -396,14 +358,10 @@ int main(int argc, char** argv)
 			return 0;
 		}
 
-		//allinfilenames = (char**)malloc((4096) * sizeof * allinfilenames);
 		allinfilenamescnt = 0;
 
 		if (argv[3] && argv[4])
 		{
-			//for (auto& entry : fs::directory_iterator(infilename))
-				//sort_filename.insert(entry.path());
-
 			for (auto& entry : fs::directory_iterator(infilename))
 			{
 				sort_filename.insert(entry.path());
@@ -486,16 +444,6 @@ int main(int argc, char** argv)
 
 			for (int i = 0; i < allinfilenamescnt; i++)
 			{
-				//allinfilenames[i] = (char*)malloc(allinfilenamescnt);
-				//alloutfilenames[i] = (char*)malloc(allinfilenamescnt);
-				//allencryptflags[i] = (char*)malloc(allinfilenamescnt);
-
-				/*allinfilenames[i] = (char*)malloc(sizeof(getline));
-				alloutfilenames[i] = (char*)malloc(sizeof(getline));
-				allencryptflags[i] = (char*)malloc(sizeof(getline));*/
-
-				//fscanf(linkfile, "%s %s\n", allinfilenames[i], alloutfilenames[i]);
-
 				fgets(getline, sizeof(getline), linkfile);
 				getline[strcspn(getline, "\n")] = '\0';
 				
@@ -580,9 +528,6 @@ int main(int argc, char** argv)
 					fclose(linkfile);
 					return 0;
 				}
-
-				/*if (strcmp(alloutfilenames[i], "LABEL") == 0)
-					strcpy(alloutfilenames[i], "");*/
 			}
 		}
 
