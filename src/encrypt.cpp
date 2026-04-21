@@ -168,14 +168,7 @@ int fat_entry_init(struct fitem_t* fat, char* path, char* itemname, int offset)
 
 	if (len > 16)
 		path += len - 16 + 1;
-
-	/*if (encryptlinkflag || encryptflag)
-		strcpy(fat->name, itemname);
-	else
-		strcpy(fat->name, path);
-
-	strncpy(fat->name, RemovePathFromString(fat->name), 16);*/
-
+	
 	if (encryptlinkflag || encryptflag)
 		strncpy(fat->name, itemname, 16);
 	else
@@ -189,12 +182,7 @@ void fat_flag_encryption(struct fitem_t* ffat, int nfiles)
 	struct fitem_t* end;
 
 	end = ffat + nfiles;
-
-	/*for (; ffat < end; ffat++)
-	{
-		ffat->flags = 1;
-	}*/
-
+	
 	for (int i = 0; ffat < end; i++, ffat++)
 	{
 		if (encryptflag || encryptlinkflag)
@@ -229,14 +217,10 @@ void GLB_Create(char* outfilename)
 
 	if (encryptflag)
 	{
-		//filecnt = 2;
-		//nfiles = allinfilenamescnt - 3;
-		//filecnt = 0;
 		nfiles = (allinfilenamescnt  - 3) / 3;
 	}
 	else
 	{
-		//filecnt = 0;
 		nfiles = allinfilenamescnt;
 	}
 
@@ -300,8 +284,6 @@ void GLB_Create(char* outfilename)
 
 	if (encryptflag)
 		filecnt = 0;
-		//filecnt = 2;
-
 	else
 		filecnt = 0;
 
