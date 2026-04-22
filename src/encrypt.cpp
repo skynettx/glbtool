@@ -281,11 +281,8 @@ void GLB_Create(char* outfilename)
 	}
 
 	buffer = (char*)malloc(largest);
-
-	if (encryptflag)
-		filecnt = 0;
-	else
-		filecnt = 0;
+	
+	filecnt = 0;
 
 	for (i = 0; i < nfiles; i++)
 	{
