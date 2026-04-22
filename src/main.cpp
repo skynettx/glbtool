@@ -440,6 +440,7 @@ int main(int argc, char** argv)
 					if (maxlinelength > LINKFILELINEMAX)
 					{
 						printf("Error in linkfile %s line %d, line longer then %d characters\n", infilename, allinfilenamescnt, LINKFILELINEMAX);
+						fclose(linkfile);
 						return 0;
 					}
 					maxlinelength = 0;
