@@ -24,6 +24,8 @@
 #define access _access
 #endif // _MSC_VER
 
+#define LINKFILELINEMAX 780
+
 char filename[260];
 char palfilename[260];
 char searchname[260];
@@ -133,7 +135,6 @@ int main(int argc, char** argv)
 	const char* convgraphicsmapsprite = "-gs";
 	const char* convsounds = "-s";
 	const char* convmusic = "-m";
-	int line;
 
 	printf("********************************************************************************\n"
 		" GLB Tool for Raptor Call Of The Shadows GLB Files                     ver 1.0.5\n"
@@ -424,12 +425,25 @@ int main(int argc, char** argv)
 		}
 		else
 		{
+			int line;
+			int maxlinelength = 0;
+
 			do
 			{
 				line = fgetc(linkfile);
+				maxlinelength++;
 
 				if (line == '\n')
+				{
 					allinfilenamescnt++;
+					
+					if (maxlinelength > LINKFILELINEMAX)
+					{
+						printf("Error in linkfile %s line %d, line longer then %d characters\n", infilename, allinfilenamescnt, LINKFILELINEMAX);
+						return 0;
+					}
+					maxlinelength = 0;
+				}
 
 			} while (line != EOF);
 
@@ -439,8 +453,8 @@ int main(int argc, char** argv)
 			alloutfilenames = (char**)malloc((allinfilenamescnt) * sizeof * alloutfilenames);
 			allencryptflags = (char**)malloc((allinfilenamescnt) * sizeof * allencryptflags);
 
-			char getline[780];
-			char p[780];
+			char getline[LINKFILELINEMAX];
+			char p[LINKFILELINEMAX];
 
 			for (int i = 0; i < allinfilenamescnt; i++)
 			{
@@ -448,16 +462,6 @@ int main(int argc, char** argv)
 				getline[strcspn(getline, "\n")] = '\0';
 				
 				size_t linelength = strlen(getline);
-
-				if (linelength + 1 > sizeof(getline))
-				{
-					printf("Error in linkfile %s line %d, line longer then %d characters\n", infilename, i + 1, (int)sizeof(getline));
-					free(allinfilenames);
-					free(alloutfilenames);
-					free(allencryptflags);
-					fclose(linkfile);
-					return 0;
-				}
 				
 				allinfilenames[i] = (char*)malloc(linelength + 1);
 				alloutfilenames[i] = (char*)malloc(linelength + 1);
