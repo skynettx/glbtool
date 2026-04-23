@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#include <filesystem>
 #include "main.h"
 
 #ifdef _WIN32
@@ -52,6 +53,9 @@ struct fitem_t hfat;
 struct fitem_t temp;
 struct fitem_t* ffat;
 struct State state;
+
+using namespace std;
+namespace fs = std::filesystem;
 
 int calculate_key_pos(int len)
 {
@@ -207,7 +211,7 @@ void GLB_Create(char* outfilename)
 	int bytes;
 	int nfiles;
 	int i;
-	int filecnt = 0;
+	int filecnt;
 	int rd, wd;
 
 	largest = 0;
@@ -224,6 +228,17 @@ void GLB_Create(char* outfilename)
 		nfiles = allinfilenamescnt;
 	}
 
+	for (i = 0; i < nfiles; i++)
+	{
+		if (!fs::is_regular_file(allinfilenames[filecnt]))
+		{
+			printf("Input file %s not found or is not a regular file\n", allinfilenames[filecnt]);
+			EXIT_Error("Input file not found or is not a regular file");
+		}
+		filecnt++;
+	}
+
+	filecnt = 0;
 	outfile = fopen(outfilename, "wb");
 
 	wd = fileno(outfile);
@@ -311,7 +326,7 @@ void GLB_Create(char* outfilename)
 			printf("Bytes read not equal to file length %s\n", allinfilenames[filecnt]);
 		}
 
-		if(ffat[i].flags)
+		if (ffat[i].flags)
 			encrypt_file(&state, buffer, ffat[i].length);
 
 		bytes = write(wd, buffer, ffat[i].length);
