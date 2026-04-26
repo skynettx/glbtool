@@ -569,10 +569,10 @@ int main(int argc, char** argv)
 	if (strcmp(argv[1], writeheader) == 0 ||
 		strcmp(argv[1], writeheaderdos) == 0)
 	{
-		writeheaderflag = 1;
-
 		if (strcmp(argv[1], writeheaderdos) == 0)
 			writeheaderdosflag = 1;
+		else
+			writeheaderflag = 1;
 
 		if (!argv[2])
 		{
@@ -658,9 +658,9 @@ int main(int argc, char** argv)
 		}
 	}
 
-	if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag
-		&& !convgraphicflag && !convgraphicmapflag && !convgraphicmapdebrisflag && !convgraphicmapspriteflag && !convsoundflag
-		&& !convmusicflag)
+	if (!extractflag && !listflag && !listallflag && !encryptflag && !encryptallflag && !encryptlinkflag && !writeheaderflag &&
+		!writeheaderdosflag && !convgraphicflag && !convgraphicmapflag && !convgraphicmapdebrisflag && !convgraphicmapspriteflag &&
+		!convsoundflag && !convmusicflag)
 	{
 		printf("Command not found\n"
 			"Usage: -h for help\n");
@@ -897,7 +897,7 @@ int main(int argc, char** argv)
 		GLB_FreeAll();
 	}
 
-	if (writeheaderflag)
+	if (writeheaderflag || writeheaderdosflag)
 	{
 		if(writeheaderdosflag)
 			GLB_WriteHeaderFileDOSFormat();
@@ -920,8 +920,8 @@ int main(int argc, char** argv)
 		}
 	}
 
-	if (extractflag || listflag || listallflag || writeheaderflag || convgraphicflag || convgraphicmapflag || convgraphicmapdebrisflag ||
-		convgraphicmapspriteflag || convsoundflag || convmusicflag)
+	if (extractflag || listflag || listallflag || writeheaderflag || writeheaderdosflag || convgraphicflag || convgraphicmapflag ||
+		convgraphicmapdebrisflag || convgraphicmapspriteflag || convsoundflag || convmusicflag)
 	{
 		fclose(infile);
 	}
